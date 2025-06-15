@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}ارسال خبر{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-container h1 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .form-container form p {
+        margin-bottom: 15px;
+    }
+
+    .form-container label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-container input[type="text"],
+    .form-container textarea,
+    .form-container input[type="file"],
+    .form-container select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        margin-top: 4px;
+    }
+
+    #formset-container {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px dashed #aaa;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .image-form {
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 16px;
+        margin: 5px 0;
+    }
+
+    .btn:hover {
+        background-color: #45a049;
+    }
+
+    #add-image {
+        background-color: #2196F3;
+    }
+
+    #add-image:hover {
+        background-color: #1976D2;
+    }
+</style>
+
+<div class="form-container">
+    <h1>📝 ارسال خبر جدید</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <h3 style="margin-top: 30px;">📸 عکس‌های بیشتر:</h3>
+        <div id="formset-container">
+            {{ formset.management_form }}
+            {% for form in formset %}
+                <div class="image-form">{{ form.image.label }} {{ form.image }}</div>
+            {% endfor %}
+        </div>
+
+        <button type="button" id="add-image" class="btn">افزودن عکس دیگر</button>
+        <br><br>
+        <button type="submit" class="btn">ثبت خبر</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const addBtn = document.getElementById('add-image');
+    const container = document.getElementById('formset-container');
+    const totalForms = document.getElementById('id_images-TOTAL_FORMS');
+
+    addBtn.addEventListener('click', function () {
+        const currentFormCount = parseInt(totalForms.value);
+        const newForm = container.querySelector('.image-form').cloneNode(true);
+        const regex = new RegExp(`images-(\\d+)-`, 'g');
+        newForm.innerHTML = newForm.innerHTML.replace(regex, `images-${currentFormCount}-`);
+        container.appendChild(newForm);
+        totalForms.value = currentFormCount + 1;
+    });
+});
+</script>
+{% endblock %}

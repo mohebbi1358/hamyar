@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}همه خبرها{% endblock %}
+
+{% block content %}
+<h1>لیست همه خبرها</h1>
+<p>تعداد کل: {{ all_news|length }}</p>
+
+{% for item in all_news %}
+    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.summary|truncatewords:20 }}</p>
+        {% if item.main_image %}
+            <img src="{{ item.main_image.url }}" alt="{{ item.title }}" style="width: 200px; height: auto;">
+        {% else %}
+            <p>بدون تصویر</p>
+        {% endif %}
+        <p><a href="{% url 'news:news_detail' item.id %}">مشاهده خبر</a></p>
+    </div>
+{% empty %}
+    <p>هیچ خبری موجود نیست.</p>
+{% endfor %}
+{% endblock %}

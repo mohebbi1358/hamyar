@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}گزارش کیف پول{% endblock %}
+
+{% block content %}
+<style>
+  .wallet-header {
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: #333;
+  }
+
+  .wallet-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .wallet-card {
+    flex: 1 1 280px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 20px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+
+  .wallet-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .wallet-card h5 {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .bg-latest {
+    border-right: 5px solid #0d6efd;
+  }
+
+  .bg-balance {
+    border-right: 5px solid #198754;
+  }
+
+  .bg-total {
+    border-right: 5px solid #6f42c1;
+  }
+
+  .wallet-table {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .wallet-table table {
+    margin: 0;
+  }
+
+  .wallet-table th, .wallet-table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .pagination {
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .wallet-cards {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>
+
+<h2 class="wallet-header">📊 گزارش تراکنش‌های کیف پول</h2>
+
+<div class="wallet-cards">
+  {% if latest_tx %}
+    <div class="wallet-card bg-latest">
+      <h5>🔄 آخرین تراکنش</h5>
+      <p>📅 {{ latest_tx.created_at|date:"Y-m-d H:i" }}</p>
+      <p>💳 نوع: {{ latest_tx.get_transaction_type_display }}</p>
+      <p>💰 مبلغ: {{ latest_tx.amount|floatformat:0|intcomma }} تومان</p>
+      <p>🎯 بابت: {{ latest_tx.get_cause_display|default:"-" }}</p>
+      <p>📌 وضعیت: {{ latest_tx.get_status_display }}</p>
+    </div>
+  {% endif %}
+
+  {% if wallet %}
+    <div class="wallet-card bg-balance text-center">
+      <h1>💼 موجودی فعلی</h1>
+      <p style="font-size: 3.5rem;">{{ wallet.balance|floatformat:0|intcomma }} تومان</p>
+    </div>
+  {% endif %}
+
+  
+</div>
+
+<div class="wallet-table mt-4">
+  <table class="table table-bordered table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>تاریخ</th>
+        <th>نوع</th>
+        <th>مبلغ</th>
+        <th>بابت</th>
+        <th>وضعیت</th>
+        <th>مانده بعد از تراکنش</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in page_obj %}
+        <tr>
+          <td>{{ item.tx.created_at|date:"Y-m-d H:i" }}</td>
+          <td>{{ item.tx.get_transaction_type_display }}</td>
+          <td>{{ item.tx.amount|floatformat:0|intcomma }}</td>
+          <td>{{ item.tx.get_cause_display|default:"-" }}</td>
+          <td>
+            {% if item.tx.status == 'SUCCESS' %}
+              <span class="badge bg-success">موفق</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">ناموفق</span>
+            {% endif %}
+          </td>
+          <td>{{ item.balance_after|floatformat:0|intcomma }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">تراکنشی یافت نشد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">قبلی</a>
+      </li>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+      </li>
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}">بعدی</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endblock %}

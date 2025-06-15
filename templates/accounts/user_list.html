@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}لیست کاربران{% endblock %}
+
+{% block content %}
+<h2>لیست کاربران</h2>
+
+<form method="get" class="mb-4">
+    <input type="text" name="q" value="{{ query }}" placeholder="جستجو مثل: حس محب 0919" class="form-control d-inline-block w-50">
+    <button type="submit" class="btn btn-primary">جستجو</button>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>نام</th>
+            <th>شماره موبایل</th>
+            <th>دسترسی دسته‌بندی</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.get_full_name|default:"-" }}</td>
+            <td>{{ user.phone }}</td>
+            <td>
+                <a href="{% url 'accounts:assign_categories' user.id %}">تنظیم دسترسی</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-center">کاربری پیدا نشد.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

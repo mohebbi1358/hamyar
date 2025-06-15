@@ -1,0 +1,17 @@
+<h2>پرداخت صدقه از کیف پول</h2>
+<p>موجودی کیف پول: {{ wallet.balance }} تومان</p>
+
+<form method="post">
+  {% csrf_token %}
+  <label>مبلغ (تومان):</label>
+  <input type="number" name="amount" required min="1000">
+  
+  <label>بابت:</label>
+  <select name="cause">
+    <option value="POOR">فقرا</option>
+    <option value="SCHOOL">مدرسه‌سازی</option>
+    <option value="HEALTH">درمان بیماران</option>
+  </select>
+  
+  <button type="submit">پرداخت صدقه</button>
+</form>

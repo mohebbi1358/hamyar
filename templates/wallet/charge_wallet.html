@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}شارژ کیف پول{% endblock %}
+
+{% block content %}
+<style>
+  .wallet-charge-container {
+    max-width: 500px;
+    margin: 30px auto;
+    padding: 25px;
+    border-radius: 12px;
+    background-color: #fdfdfd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    font-family: "Vazir", sans-serif;
+  }
+
+  .wallet-charge-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .wallet-charge-container label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .wallet-charge-container input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-size: 15px;
+  }
+
+  .wallet-charge-container .amount-btns {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .wallet-charge-container .amount-btn {
+    padding: 10px 15px;
+    border: none;
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 15px;
+  }
+
+  .wallet-charge-container .amount-btn:hover {
+    background-color: #c7c7c7;
+  }
+
+  .wallet-charge-container .submit-btn {
+    margin-top: 25px;
+    width: 100%;
+    padding: 12px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .wallet-charge-container .submit-btn:hover {
+    background-color: #0b5ed7;
+  }
+
+  #charge-amount-display {
+    margin-top: 5px;
+    color: #666;
+  }
+</style>
+
+<div class="wallet-charge-container">
+  <h2>👛 شارژ کیف پول</h2>
+  <form method="post" id="charge-form">
+    {% csrf_token %}
+    <label for="charge-amount">مبلغ (تومان):</label>
+    <input type="text" name="amount" id="charge-amount" required autocomplete="off" placeholder="مثلاً ۵۰,۰۰۰">
+    <small id="charge-amount-display"></small>
+
+    <div class="amount-btns">
+      <button type="button" class="amount-btn" data-amount="50000">۵۰,۰۰۰</button>
+      <button type="button" class="amount-btn" data-amount="100000">۱۰۰,۰۰۰</button>
+      <button type="button" class="amount-btn" data-amount="200000">۲۰۰,۰۰۰</button>
+      <button type="button" class="amount-btn" data-amount="500000">۵۰۰,۰۰۰</button>
+      <button type="button" class="amount-btn" data-amount="700000">۷۰۰,۰۰۰</button>
+    </div>
+
+    <button type="submit" class="submit-btn">💳 پرداخت و شارژ</button>
+    
+  </form>
+</div>
+
+<script>
+  const chargeInput = document.getElementById('charge-amount');
+  const display = document.getElementById('charge-amount-display');
+
+  function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function cleanNumber(str) {
+    return str.replace(/,/g, '');
+  }
+
+  function updateDisplay() {
+    const raw = cleanNumber(chargeInput.value);
+    const num = parseInt(raw, 10);
+    if (!isNaN(num)) {
+      display.textContent = `مبلغ وارد شده: ${formatNumber(num)} تومان`;
+    } else {
+      display.textContent = '';
+    }
+  }
+
+  chargeInput.addEventListener('input', (e) => {
+    let cursorPos = chargeInput.selectionStart;
+    let oldVal = chargeInput.value;
+    let cleaned = oldVal.replace(/[^\d]/g, '');
+    if (cleaned === '') {
+      chargeInput.value = '';
+      display.textContent = '';
+      return;
+    }
+    let formatted = formatNumber(cleaned);
+    chargeInput.value = formatted;
+    let diff = formatted.length - oldVal.length;
+    chargeInput.selectionStart = chargeInput.selectionEnd = cursorPos + diff;
+    updateDisplay();
+  });
+
+  document.querySelectorAll('.amount-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-amount');
+      chargeInput.value = formatNumber(val);
+      updateDisplay();
+      chargeInput.focus();
+    });
+  });
+
+  document.getElementById('charge-form').addEventListener('submit', function (e) {
+    const val = cleanNumber(chargeInput.value);
+    const amount = parseInt(val);
+    if (isNaN(amount) || amount < 1000) {
+      alert('لطفاً مبلغی بیشتر از ۱,۰۰۰ تومان وارد کنید.');
+      e.preventDefault();
+      return false;
+    }
+  });
+</script>
+{% endblock %}

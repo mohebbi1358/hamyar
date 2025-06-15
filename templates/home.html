@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}صفحه اخبار{% endblock %}
+
+{% block content %}
+
+
+<!-- 🔷 آخرین اخبار در کادر جدا -->
+<div style="background: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <h2 style="margin-top: 0;">آخرین اخبار:</h2>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        {% for item in latest_news %}
+            {% if item.main_image %}
+            <div style="width: 180px; border: 1px solid #ddd; padding: 5px; text-align: center; border-radius: 6px; background-color: #fafafa;">
+                <a href="{% url 'news:news_detail' item.id %}" style="text-decoration: none; color: inherit;">
+                    <img src="{{ item.main_image.url }}" alt="{{ item.title }}"
+                         style="width: 100%; height: 120px; object-fit: cover; border-radius: 5px;">
+                    <p style="margin-top: 8px; font-size: 14px;">{{ item.title }}</p>
+                </a>
+            </div>
+            {% else %}
+            <p>{{ item.title }} (بدون تصویر)</p>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+
+
+
+<!-- 🔷 دسته‌بندی و لیست اخبار در یک کادر -->
+<div style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+
+    <!-- 🔹 تب دسته‌بندی -->
+    <div style="margin-bottom: 20px;">
+        <strong>دسته‌بندی:</strong>
+        <a href="{% url 'home' %}" style="margin-left: 10px; color: {% if not selected_category_id %}red{% else %}black{% endif %};">همه</a>
+        {% for category in categories %}
+            <a href="?category={{ category.id }}" style="margin-left: 10px; color: {% if selected_category_id == category.id %}red{% else %}black{% endif %};">
+                {{ category.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <!-- 🔹 لیست اخبار با عنوان -->
+    <ul class="news-list" style="list-style-type: disc; padding-right: 40px;">
+        {% for item in page_obj %}
+            {% if item.id %}
+            <li style="margin-bottom: 10px;">
+                <a href="{% url 'news:news_detail' item.id %}">
+                    <strong>{{ item.title }}</strong>
+                </a>
+            </li>
+            {% endif %}
+        {% empty %}
+            <li>هیچ خبری در این دسته وجود ندارد.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- 🔹 صفحه‌بندی -->
+    <div class="pagination" style="text-align: center; margin-top: 20px;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}">صفحه قبل</a>
+        {% endif %}
+
+        <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}">صفحه بعد</a>
+        {% endif %}
+    </div>
+</div>
+
+
+
+{% endblock %}

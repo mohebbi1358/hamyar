@@ -1,0 +1,102 @@
+
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+
+{% block title %}جزئیات شهید{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated and user.is_superuser %}
+  <div class="text-center mb-4">
+    <a href="{% url 'martyrs:martyr_edit' martyr.id %}" class="btn btn-warning">
+      <i class="bi bi-pencil-square"></i> ویرایش اطلاعات شهید
+    </a>
+  </div>
+{% endif %}
+
+<div style="max-width: 800px; margin: auto; padding: 20px;">
+  
+  <!-- 🔹 اطلاعات شهید -->
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h2 style="margin-bottom: 10px;">{{ martyr.first_name }} {{ martyr.last_name }}</h2>
+
+    {% if martyr.photo %}
+      <img src="{{ martyr.photo.url }}" alt="{{ martyr }}" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;">
+    {% endif %}
+  </div>
+
+  <ul style="list-style: none; padding: 0; font-size: 16px; line-height: 1.8;">
+    <li><strong>نام پدر:</strong> {{ martyr.father_name }}</li>
+    <li><strong>محل تولد:</strong> {{ martyr.birth_place }}</li>
+    
+    <li><strong>تاریخ تولد:</strong> {{ martyr.birth_date|to_jalali }}</li>
+    <li><strong>عملیات آخر:</strong> {{ martyr.last_operation }}</li>
+    <li><strong>منطقه شهادت:</strong> {{ martyr.martyr_region }}</li>
+    <li><strong>محل شهادت:</strong> {{ martyr.martyr_place }}</li>
+    <li><strong>تاریخ شهادت:</strong> {{ martyr.martyr_date|to_jalali }}</li>
+    <li><strong>محل دفن:</strong> {{ martyr.grave_place }}</li>
+  </ul>
+
+  <hr style="margin: 30px 0;">
+
+  <!-- 🔹 فرم دل‌نوشته -->
+  {% if user.is_authenticated %}
+    <h3>ثبت دل‌نوشته</h3>
+    <form method="post" enctype="multipart/form-data" style="margin-bottom: 30px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="padding: 8px 16px; background-color: #0055aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          ارسال
+        </button>
+    </form>
+  {% else %}
+    <p style="text-align: center; margin-bottom: 30px;">
+      برای ثبت دل‌نوشته <a href="{% url 'login' %}?next={{ request.path }}" style="color: #0055aa;">وارد شوید</a>.
+    </p>
+  {% endif %}
+
+  <hr>
+
+  <!-- 🔹 لیست دل‌نوشته‌ها -->
+  <h3 style="margin-top: 30px;">دل‌نوشته‌ها</h3>
+  {% if memories %}
+    {% for memory in memories %}
+      <div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9;">
+        
+        <p style="margin-bottom: 10px;">
+          <strong>کاربر:</strong>
+          {% if memory.user.first_name or memory.user.last_name %}
+            {{ memory.user.first_name }} {{ memory.user.last_name }}
+          {% else %}
+            -
+          {% endif %}
+        </p>
+
+        {% if memory.text %}
+          <p style="margin-bottom: 10px;">{{ memory.text }}</p>
+        {% endif %}
+
+        {% if memory.image %}
+          <div style="margin-bottom: 10px;">
+            <img src="{{ memory.image.url }}" alt="" style="max-width: 100%; border-radius: 6px;">
+          </div>
+        {% endif %}
+
+        {% if memory.audio %}
+          <div style="margin-bottom: 10px;">
+            <audio controls style="width: 100%;">
+              <source src="{{ memory.audio.url }}" type="audio/mpeg">
+              مرورگر شما از پخش صوت پشتیبانی نمی‌کند.
+            </audio>
+          </div>
+        {% endif %}
+
+        <p style="font-size: 0.85em; color: gray;">{{ memory.created_at|to_jalali }}</p>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align: center;">هیچ دل‌نوشته‌ای ثبت نشده است.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

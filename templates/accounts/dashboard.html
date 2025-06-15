@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}داشبورد{% endblock %}
+
+{% block content %}
+<style>
+    .dashboard-container {
+        max-width: 900px;
+        margin: auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+
+    .welcome {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+    }
+
+    .dashboard-card {
+        flex: 1 1 220px;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .dashboard-card:hover {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+    }
+
+    .dashboard-card a {
+        text-decoration: none;
+        color: #333;
+        font-weight: bold;
+        display: block;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+        .dashboard-card {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="welcome">
+        <h2>🎉 خوش آمدید {{ request.user.first_name|default:"کاربر" }}!</h2>
+        <p>به داشبورد شخصی خود خوش آمدید.</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div>📄 ارسال خبر</div>
+            <a href="{% url 'news:create_news' %}">افزودن خبر جدید</a>
+        </div>
+        <div class="dashboard-card">
+            <div>🕊️ افزودن شهید</div>
+            <a href="{% url 'martyrs:create_martyr' %}">ثبت شهید</a>
+        </div>
+        <div class="dashboard-card">
+            <div>📰 مشاهده اخبار</div>
+            <a href="{% url 'news:news_list' %}">لیست اخبار</a>
+        </div>
+        <div class="dashboard-card">
+            <div>👤 پروفایل</div>
+            <a href="{% url 'accounts:complete_profile' %}?phone={{ user.phone }}">ویرایش پروفایل</a>
+        </div>
+        <div class="dashboard-card">
+            <div>💰 کیف پول</div>
+            <a href="{% url 'wallet:wallet_dashboard' %}">مشاهده کیف پول</a>
+        </div>
+        <div class="dashboard-card">
+            <div>❤️ صدقه</div>
+            <a href="{% url 'donate' %}">پرداخت صدقه</a>
+        </div>
+
+
+        <div class="dashboard-card">
+            <div>📂 مدیریت دسته‌بندی‌ها</div>
+            <a href="{% url 'news:manage_categories' %}">دسته‌بندی‌ها</a>
+        </div>
+
+
+
+
+        <div class="dashboard-card">
+            <div>🚪 خروج</div>
+            <a href="{% url 'accounts:logout' %}">خروج از حساب</a>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

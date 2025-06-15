@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}تخصیص دسته‌بندی{% endblock %}
+
+{% block content %}
+  <h2>تخصیص دسته‌بندی به کاربر: {{ target_user.get_full_name|default:target_user.phone }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">ذخیره</button>
+  </form>
+{% endblock %}

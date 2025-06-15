@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}تکمیل پروفایل{% endblock %}
+
+{% block content %}
+<style>
+    .profile-form-container {
+        max-width: 500px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .profile-form-container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-form-container label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+    }
+
+    .profile-form-container input[type="text"],
+    .profile-form-container input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+    .profile-form-container button {
+        width: 100%;
+        padding: 12px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .profile-form-container button:hover {
+        background-color: #45a049;
+    }
+
+    .message-error {
+        color: red;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .message-success {
+        color: green;
+        text-align: center;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="profile-form-container">
+    <h2>تکمیل پروفایل</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="phone" value="{{ user.phone }}">
+
+        <label for="first_name">نام:</label>
+        <input type="text" name="first_name" id="first_name" value="{{ user.first_name }}" required>
+
+        <label for="last_name">نام خانوادگی:</label>
+        <input type="text" name="last_name" id="last_name" value="{{ user.last_name }}" required>
+
+        <label for="password">رمز عبور جدید:</label>
+        <input type="password" name="password" id="password" required>
+
+        <button type="submit">ذخیره تغییرات</button>
+    </form>
+
+    {% if error %}
+        <p class="message-error">{{ error }}</p>
+    {% endif %}
+
+    {% if success %}
+        <p class="message-success">{{ success }}</p>
+    {% endif %}
+</div>
+{% endblock %}

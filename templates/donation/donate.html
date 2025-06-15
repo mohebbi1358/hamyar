@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}فرم کمک مالی{% endblock %}
+
+{% block content %}
+<style>
+  .donate-container {
+    max-width: 500px;
+    margin: 30px auto;
+    padding: 25px;
+    border-radius: 12px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: "Vazir", sans-serif;
+  }
+
+  .donate-container label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .donate-container input[type="text"],
+  .donate-container select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-size: 15px;
+  }
+
+  .suggested-amounts {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .amount-btn {
+    padding: 10px 15px;
+    border: none;
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 15px;
+  }
+
+  .amount-btn:hover {
+    background-color: #c7c7c7;
+  }
+
+  .pay-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pay-buttons button {
+    flex: 1 1 45%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4caf50;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .pay-buttons button:hover {
+    background-color: #43a047;
+  }
+
+  #amount-display {
+    color: #666;
+    margin-top: 5px;
+  }
+
+  @media (max-width: 500px) {
+    .pay-buttons button {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+
+<div class="donate-container">
+  {% if martyr %}
+    <div style="text-align: center; margin-bottom: 20px;">
+      <p style="font-size: 18px;">این صدقه را به یاد شهید:</p>
+      
+      {% if martyr.photo %}
+        <img src="{{ martyr.photo.url }}" alt="شهید" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-bottom: 10px;">
+      {% else %}
+        <div style="width: 100px; height: 100px; border-radius: 50%; background-color: #ccc; line-height: 100px; margin: 0 auto 10px;">
+          <span style="color: white;">بدون عکس</span>
+        </div>
+      {% endif %}
+      
+      <h3 style="margin: 5px 0;">{{ martyr.first_name }} {{ martyr.last_name }}</h3>
+    </div>
+  {% endif %}
+
+
+  <form method="post" action="{% url 'donate' %}" id="donate-form">
+    {% csrf_token %}
+    
+    <label for="amount">مبلغ (تومان):</label>
+    <input type="text" name="amount" id="amount" required autocomplete="off" placeholder="مثلاً ۲۰,۰۰۰">
+    <small id="amount-display"></small>
+
+    <div class="suggested-amounts">
+      {% for val in suggested_amounts %}
+      <button type="button" class="amount-btn" data-amount="{{ val }}">{{ val|intcomma }}</button>
+      {% endfor %}
+    </div>
+
+    <label for="cause">بابت:</label>
+    <select name="cause" id="cause">
+      <option value="POOR">فقرا</option>
+      <option value="SCHOOL">مدرسه‌سازی</option>
+      <option value="HEALTH">درمان بیماران</option>
+    </select>
+
+    <div class="pay-buttons">
+      <button type="submit" name="pay_method" value="gateway" class="pay-btn">💳 پرداخت بانکی</button>
+      {% if user.is_authenticated %}
+        <button type="submit" name="pay_method" value="wallet" class="pay-btn">👛 پرداخت از کیف پول</button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<script>
+  const amountInput = document.getElementById('amount');
+  const amountDisplay = document.getElementById('amount-display');
+
+  // فرمت عدد با جداکننده سه‌رقمی
+  function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  // پاک کردن کاماها
+  function cleanNumber(str) {
+    return str.replace(/,/g, '');
+  }
+
+  // به‌روزرسانی نمایش زیر فیلد
+  function updateAmountDisplay() {
+    const rawVal = cleanNumber(amountInput.value);
+    const numVal = parseInt(rawVal, 10);
+    if (!isNaN(numVal)) {
+      amountDisplay.textContent = `مبلغ وارد شده: ${formatNumber(numVal)} تومان`;
+    } else {
+      amountDisplay.textContent = '';
+    }
+  }
+
+  // هنگام وارد کردن مقدار، فرمت کن و نمایش رو آپدیت کن
+  amountInput.addEventListener('input', (e) => {
+    let cursorPos = amountInput.selectionStart;
+    let oldVal = amountInput.value;
+
+    // فقط اعداد و کاما مجاز
+    let cleaned = oldVal.replace(/[^\d]/g, '');
+    if (cleaned === '') {
+      amountInput.value = '';
+      amountDisplay.textContent = '';
+      return;
+    }
+
+    let formatted = formatNumber(cleaned);
+
+    amountInput.value = formatted;
+
+    // تلاش برای حفظ مکان کرسر
+    let diff = formatted.length - oldVal.length;
+    amountInput.selectionStart = amountInput.selectionEnd = cursorPos + diff;
+
+    updateAmountDisplay();
+  });
+
+  // وقتی فیلد خارج میشه کاماها حذف نشه (برعکس کد قبلی)
+
+  // وقتی دکمه مبلغ پیشنهادی زده میشه، مقدار رو ست کن و نمایش رو آپدیت کن
+  document.querySelectorAll('.amount-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-amount');
+      amountInput.value = formatNumber(val);
+      updateAmountDisplay();
+      amountInput.focus();
+    });
+  });
+
+  // اعتبارسنجی فرم و نمایش خلاصه هنگام ارسال (به جای confirm ساده)
+  document.getElementById('donate-form').addEventListener('submit', function(e) {
+    const val = cleanNumber(amountInput.value);
+    const amount = parseInt(val);
+    if (isNaN(amount) || amount < 1000) {
+      alert('لطفاً مبلغی بیشتر از ۱,۰۰۰ تومان وارد کنید.');
+      e.preventDefault();
+      return false;
+    }
+  });
+</script>
+
+{% endblock %}

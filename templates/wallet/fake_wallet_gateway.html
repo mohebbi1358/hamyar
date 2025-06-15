@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load humanize %}  <!-- این خط رو اضافه کن -->
+{% block title %}درگاه فیکی شارژ کیف پول{% endblock %}
+{% block content %}
+<div style="max-width: 600px; margin: auto; padding: 20px; background: #fff; border-radius: 10px; box-shadow: 0 0 10px #ccc;">
+  <h2>💳 شبیه‌سازی پرداخت برای شارژ کیف پول</h2>
+  <p><strong>مبلغ:</strong> {{ wallet_tx.amount|intcomma }} تومان</p>
+
+  <a href="{% url 'wallet:wallet_charge_callback' wallet_tx.id %}?status=OK&ref_id=CHARGE123" style="display:inline-block;margin:10px;padding:10px 20px;background:#28a745;color:white;border-radius:8px;text-decoration:none;">
+    پرداخت موفق
+  </a>
+
+  <a href="{% url 'wallet:wallet_charge_callback' wallet_tx.id %}?status=FAILED" style="display:inline-block;margin:10px;padding:10px 20px;background:#dc3545;color:white;border-radius:8px;text-decoration:none;">
+    پرداخت ناموفق
+  </a>
+</div>
+{% endblock %}

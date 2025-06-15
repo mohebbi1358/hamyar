@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}لیست اخبار{% endblock %}
+
+{% block content %}
+
+<h1 style="text-align: center; margin-bottom: 30px;">📢 آخرین اخبار</h1>
+
+<!-- 🔹 تب دسته‌بندی -->
+<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px;">
+    <a href="{% url 'news:news_list' %}" 
+       style="padding: 8px 16px; border-radius: 8px; text-decoration: none;
+              background-color: {% if not selected_category_id %}#007BFF{% else %}#f0f0f0{% endif %};
+              color: {% if not selected_category_id %}white{% else %}black{% endif %};">
+        همه
+    </a>
+    {% for category in categories %}
+        <a href="?category={{ category.id }}" 
+           style="padding: 8px 16px; border-radius: 8px; text-decoration: none;
+                  background-color: {% if selected_category_id == category.id %}#007BFF{% else %}#f0f0f0{% endif %};
+                  color: {% if selected_category_id == category.id %}white{% else %}black{% endif %};">
+            {{ category.name }}
+        </a>
+    {% endfor %}
+</div>
+
+<!-- 🔹 لیست اخبار -->
+<section class="news-list" style="display: flex; flex-direction: column; gap: 30px;">
+    {% for item in page_obj %}
+    <div class="news-item" style="display: flex; gap: 20px; align-items: flex-start; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+        <a href="{% url 'news:news_detail' item.id %}">
+            <img src="{{ item.main_image.url }}" alt="{{ item.title }}" 
+                 style="width: 180px; height: 120px; object-fit: cover; border-radius: 8px;">
+        </a>
+        <div style="flex: 1;">
+            <a href="{% url 'news:news_detail' item.id %}" style="text-decoration: none; color: black;">
+                <h3 style="margin-top: 0;">{{ item.title }}</h3>
+            </a>
+            <p style="color: #555;">{{ item.summary|truncatewords:25 }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+<!-- 🔹 صفحه‌بندی -->
+<div class="pagination" style="text-align: center; margin-top: 40px;">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}" 
+           style="margin: 0 10px; text-decoration: none; color: #007BFF;">⏪ صفحه قبل</a>
+    {% endif %}
+
+    <span style="font-weight: bold;">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}" 
+           style="margin: 0 10px; text-decoration: none; color: #007BFF;">صفحه بعد ⏩</a>
+    {% endif %}
+</div>
+
+{% endblock %}

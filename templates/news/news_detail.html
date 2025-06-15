@@ -1,0 +1,15 @@
+# templates/news/news_detail.html
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ news.title }}</h1>
+<img src="{{ news.main_image.url }}" alt="" width="400">
+<p>{{ news.summary }}</p>
+<div>{{ news.body }}</div>
+
+<h3>تصاویر دیگر</h3>
+<ul>
+    {% for img in news.images.all %}
+        <li><img src="{{ img.image.url }}" alt="" width="200"></li>
+    {% endfor %}
+</ul>
+{% endblock %}

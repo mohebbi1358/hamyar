@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}ویرایش دسته‌بندی{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+    <h2>✏️ ویرایش دسته‌بندی</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">💾 ذخیره</button>
+        <a href="{% url 'news:manage_categories' %}" class="btn" style="background:#888;">بازگشت</a>
+    </form>
+</div>
+{% endblock %}

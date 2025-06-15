@@ -1,0 +1,15 @@
+{% if donation.status == "SUCCESS" %}
+  <h2>پرداخت موفق</h2>
+  <p>مبلغ: {{ donation.amount }} تومان</p>
+
+  {% if donation.get_transaction_type_display %}
+    <p>نوع تراکنش: {{ donation.get_transaction_type_display }}</p>
+  {% elif donation.get_cause_display %}
+    <p>بابت: {{ donation.get_cause_display }}</p>
+  {% endif %}
+
+  <p>کد رهگیری: {{ donation.ref_id|default:"-" }}</p>
+{% else %}
+  <h2>پرداخت ناموفق بود</h2>
+  <p>لطفاً دوباره تلاش کنید.</p>
+{% endif %}

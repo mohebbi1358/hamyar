@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}مدیریت دسته‌بندی‌ها{% endblock %}
+
+{% block content %}
+<h2>دسته‌بندی‌ها</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>نام</th>
+            <th>نامک (slug)</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for category in categories %}
+            <tr>
+                <td>{{ category.name }}</td>
+                <td>{{ category.slug }}</td>
+                <td>
+                    <a href="{% url 'news:edit_category' category.id %}">✏️ ویرایش</a> |
+                    <a href="{% url 'news:delete_category' category.id %}" onclick="return confirm('آیا از حذف این دسته‌بندی مطمئن هستید؟')">🗑️ حذف</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="3">هیچ دسته‌بندی‌ای ثبت نشده است.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+<h3>افزودن دسته‌بندی جدید</h3>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div style="margin-bottom: 12px;">
+        <label for="{{ form.name.id_for_label }}">نام دسته‌بندی:</label><br>
+        {{ form.name }}
+        {% if form.name.errors %}
+            <div style="color:red;">{{ form.name.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div style="margin-bottom: 12px;">
+        <label for="{{ form.slug.id_for_label }}">نامک (Slug):</label><br>
+        {{ form.slug }}
+        <small style="color: gray;">مثلاً: <code>politics</code> یا <code>اخبار-ورزشی</code> (فقط حروف کوچک، عدد، خط تیره)</small>
+        {% if form.slug.errors %}
+            <div style="color:red;">{{ form.slug.errors }}</div>
+        {% endif %}
+    </div>
+
+    <button type="submit">➕ افزودن دسته‌بندی</button>
+</form>
+{% endblock %}

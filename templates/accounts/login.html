@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ورود با شماره موبایل</title>
+</head>
+<body>
+    <h2>ورود</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label for="phone">شماره موبایل:</label>
+        <input type="text" name="phone" id="phone" required><br><br>
+
+        <label for="password">رمز عبور:</label>
+        <input type="password" name="password" id="password"><br><br>
+
+        <button type="submit" name="action" value="login_password">ورود با رمز عبور</button>
+        <button type="submit" name="action" value="send_code">ارسال کد پیامکی</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>

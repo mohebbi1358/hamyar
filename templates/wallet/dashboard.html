@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}داشبورد کیف پول{% endblock %}
+
+{% block content %}
+<h2>داشبورد کیف پول</h2>
+
+<p>موجودی فعلی: {{ wallet.balance }} تومان</p>
+
+<h3>تراکنش‌ها:</h3>
+<table border="1" cellpadding="5" cellspacing="0">
+    <tr>
+        <th>مبلغ</th>
+        <th>نوع</th>
+        <th>بابت</th>
+        <th>وضعیت</th>
+        <th>تاریخ</th>
+    </tr>
+    {% for tx in transactions %}
+    <tr>
+        <td>{{ tx.amount }}</td>
+        <td>{{ tx.get_transaction_type_display }}</td>
+        <td>{{ tx.get_cause_display|default:"-" }}</td>
+        <td>{{ tx.get_status_display }}</td>
+        <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">هیچ تراکنشی ثبت نشده است.</td></tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="{% url 'wallet:charge_wallet' %}">شارژ کیف پول</a>
+{% endblock %}
