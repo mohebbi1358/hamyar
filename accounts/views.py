@@ -110,7 +110,7 @@ def verify_view(request):
             User = get_user_model()
             user, created = User.objects.get_or_create(phone=phone)
             login(request, user)
-            return redirect('complete_profile')
+            return redirect('accounts:complete_profile')
         else:
             return render(request, 'accounts/verify.html', {
                 'error': 'کد وارد شده معتبر نیست.',
