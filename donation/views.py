@@ -76,20 +76,25 @@ def donate(request):
 
 @csrf_exempt
 def payment_callback(request, donation_id):
-    # بررسی وضعیت تراکنش از پاسخ بانک (اینجا شبیه‌سازی شده)
     donation = Donation.objects.get(id=donation_id)
 
-    # فرض: پارامترهای برگشتی بانک مثل ref_id، status و ...
     status = request.GET.get('status', 'FAILED')
     ref_id = request.GET.get('ref_id', '')
     gateway_response = str(dict(request.GET))
 
+    # ذخیره وضعیت پرداخت در دیتابیس
     donation.status = 'SUCCESS' if status == 'OK' else 'FAILED'
     donation.ref_id = ref_id
     donation.gateway_response = gateway_response
     donation.save()
 
-    return render(request, 'donation/result.html', {'donation': donation})
+    # بررسی موفقیت یا شکست پرداخت
+    if status == 'OK':
+        messages.success(request, "پرداخت با موفقیت انجام شد.")
+        return redirect('home')  # فرض بر اینکه نام URL صفحه اصلی "home" هست
+    else:
+        messages.error(request, "پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.")
+        return redirect('donate')
 
 
 

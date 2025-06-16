@@ -3,39 +3,108 @@
 {% block title %}ثبت شهید جدید{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-  <div class="card shadow-lg border-0 rounded-4">
-    <div class="card-header bg-primary text-white rounded-top-4 d-flex align-items-center gap-2">
-      <i class="bi bi-person-plus-fill fs-4"></i>
-      <h5 class="mb-0">فرم ثبت اطلاعات شهید</h5>
-    </div>
-    <div class="card-body bg-light">
-      <form method="post" enctype="multipart/form-data" novalidate>
-        {% csrf_token %}
+<style>
+  .martyr-form-container {
+    max-width: 900px;
+    margin: 40px auto;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-family: "Vazir", sans-serif;
+  }
 
-        {% for field in form %}
-          <div class="mb-4">
-            <label for="{{ field.id_for_label }}" class="form-label fw-bold">
-              <i class="bi bi-pencil me-1 text-secondary"></i> {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-              <div class="form-text">{{ field.help_text }}</div>
-            {% endif %}
-            {% for error in field.errors %}
-              <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle"></i> {{ error }}</div>
-            {% endfor %}
-          </div>
-        {% endfor %}
+  .martyr-form-container h5 {
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 22px;
+    color: #333;
+  }
 
-        <div class="d-grid">
-          <button type="submit" class="btn btn-success btn-lg shadow-sm">
-            <i class="bi bi-check-circle-fill me-1"></i> ثبت اطلاعات
-          </button>
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 40px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #444;
+  }
+
+  .form-control {
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  .form-text {
+    font-size: 13px;
+    color: #777;
+    margin-top: 4px;
+  }
+
+  .text-danger {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #d32f2f;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #4caf50;
+    color: white;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    margin-top: 30px;
+  }
+
+  .submit-btn:hover {
+    background-color: #43a047;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="martyr-form-container">
+  <h5><i class="bi bi-person-plus-fill me-1"></i> فرم ثبت اطلاعات شهید</h5>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <div class="form-grid">
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <div class="form-text">{{ field.help_text }}</div>
+          {% endif %}
+          {% for error in field.errors %}
+            <div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+          {% endfor %}
         </div>
-      </form>
+      {% endfor %}
     </div>
-  </div>
+
+    <button type="submit" class="submit-btn">
+      <i class="bi bi-check-circle-fill me-1"></i> ثبت اطلاعات
+    </button>
+  </form>
 </div>
 {% endblock %}
 

@@ -30,6 +30,12 @@ def charge_wallet(request):
     return render(request, 'wallet/charge_wallet.html')
 
 
+
+
+
+
+
+
 @csrf_exempt
 @login_required
 def wallet_charge_callback(request, wallet_tx_id):
@@ -43,13 +49,14 @@ def wallet_charge_callback(request, wallet_tx_id):
     status = request.GET.get('status', 'FAILED')
     ref_id = request.GET.get('ref_id', '')
 
+    # تنظیم وضعیت و ذخیره
     wallet_tx.status = 'SUCCESS' if status == 'OK' else 'FAILED'
     wallet_tx.ref_id = ref_id
     wallet_tx.save()
 
     if status not in ['OK', 'FAILED']:
         messages.error(request, "وضعیت بازگشتی از درگاه نامعتبر است.")
-        return render(request, 'wallet/result.html', {'donation': wallet_tx})
+        return redirect('wallet:charge_wallet')  # 👈 فرض بر این است که URL این صفحه است
 
     if wallet_tx.status == 'SUCCESS':
         wallet = wallet_tx.wallet
@@ -58,11 +65,8 @@ def wallet_charge_callback(request, wallet_tx_id):
         messages.success(request, "شارژ کیف پول با موفقیت انجام شد.")
         return redirect('wallet:wallet_transactions_report')
     else:
-        messages.error(request, "پرداخت ناموفق بود.")
-        return render(request, 'wallet/result.html', {'donation': wallet_tx})  # 👈 تغییر این خط
-
-
-
+        messages.error(request, "پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.")
+        return redirect('wallet:charge_wallet')  # 👈 تغییر مسیر به صفحه شارژ
 
 
 

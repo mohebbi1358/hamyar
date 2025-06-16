@@ -1,24 +1,99 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>ورود با شماره موبایل</title>
-</head>
-<body>
-    <h2>ورود</h2>
-    <form method="post">
-        {% csrf_token %}
-        <label for="phone">شماره موبایل:</label>
-        <input type="text" name="phone" id="phone" required><br><br>
+{% extends "base.html" %}
 
-        <label for="password">رمز عبور:</label>
-        <input type="password" name="password" id="password"><br><br>
+{% block title %}ورود به سامانه{% endblock %}
 
-        <button type="submit" name="action" value="login_password">ورود با رمز عبور</button>
-        <button type="submit" name="action" value="send_code">ارسال کد پیامکی</button>
-    </form>
+{% block content %}
+<style>
+  .login-container {
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 25px;
+    border-radius: 12px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: "Vazir", sans-serif;
+  }
+
+  .login-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 24px;
+    color: #333;
+  }
+
+  .login-container label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  .login-container input[type="text"],
+  .login-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+  }
+
+  .login-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .login-buttons button {
+    flex: 1 1 48%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #1976d2;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .login-buttons button:hover {
+    background-color: #1565c0;
+  }
+
+  .error-message {
+    color: red;
+    text-align: center;
+    margin-top: 15px;
+  }
+
+  @media (max-width: 500px) {
+    .login-buttons button {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+
+<div class="login-container">
+  <h2>ورود به سامانه</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <label for="phone">شماره موبایل:</label>
+    <input type="text" name="phone" id="phone" required placeholder="مثلاً 09121234567">
+
+    <label for="password">رمز عبور:</label>
+    <input type="password" name="password" id="password" placeholder="در صورت ورود با رمز">
+
+    <div class="login-buttons">
+      <button type="submit" name="action" value="login_password">ورود با رمز عبور</button>
+      <button type="submit" name="action" value="send_code">ارسال کد پیامکی</button>
+    </div>
 
     {% if error %}
-        <p style="color:red;">{{ error }}</p>
+      <p class="error-message">{{ error }}</p>
     {% endif %}
-</body>
-</html>
+  </form>
+</div>
+{% endblock %}
