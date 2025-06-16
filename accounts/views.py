@@ -96,7 +96,7 @@ def login_view(request):
 
             print(f"[SMS to {phone}] Code: {code}")
             from django.urls import reverse
-            return redirect(f"{reverse('verify')}?phone={phone}")
+            return redirect(f"{reverse('accounts:verify')}?phone={phone}")
 
     return render(request, 'accounts/login.html')
 
