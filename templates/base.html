@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+{% load static %}
 
 
 <html lang="fa">
@@ -41,14 +41,20 @@
             margin: 0;
             padding: 0;
             direction: rtl;
-            background-color: #f8f9fa;
+            background-color: #ffffff;
         }
 
-        header, footer {
+        header {
+            background-color: #ffffff; /* یا transparent */
+            padding: 0;
+        }
+
+        footer {
             background-color: #333;
             color: white;
             padding: 10px 20px;
         }
+
 
         nav ul {
             list-style: none;
@@ -64,7 +70,7 @@
         }
 
         nav ul li a {
-            color: white;
+            color: rgb(0, 0, 0);
             text-decoration: none;
             padding: 8px;
             display: block;
@@ -121,42 +127,87 @@
 <body>
 
 <header>
-    <nav>
-        <ul>
-            <li><a href="/">خانه</a></li>
-            <li><a href="/martyrs/list/">لیست شهدا</a></li>
-            <li><a href="{% url 'news:news_list' %}">اخبار</a></li>
-            {% if user.is_authenticated %}
-                <li>
-                    <a href="#">
-                        {% if user.gender == 'male' %}
-                            آقای {{ user.last_name }}
-                        {% elif user.gender == 'female' %}
-                            خانم {{ user.last_name }}
-                        {% else %}
-                            {{ user.get_full_name|default:user.phone }}
-                        {% endif %}
-                    </a>
-                    <ul class="profile-menu">
-                        <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
-                        <li><a href="{% url 'accounts:complete_profile' %}?phone={{ user.phone }}">ویرایش پروفایل</a></li>
-                        {% if request.user.is_authenticated and request.user.allowed_categories.exists %}
-                            <li><a href="{% url 'news:create_news' %}">ارسال خبر</a></li>
-                        {% endif %}
-                        
-                        <li><a href="{% url 'martyrs:create_martyr' %}">افزودن شهید</a></li>
-                            {% if user.is_authenticated and user.is_staff %}
+    <nav style="
+        background-color: rgba(43, 247, 247, 0.85);
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        padding: 12px 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        backdrop-filter: saturate(180%) blur(10px);
+        -webkit-backdrop-filter: saturate(180%) blur(10px);
+    ">
+        <!-- لوگو سمت راست -->
+        <div style="flex: 0 0 auto; text-align: center; margin-left: 1cm; display: flex; flex-direction: column; justify-content: center;">
+            <a href="/">
+                <img src="/static/images/logo.png" alt="لوگو" style="height: 70px;">
+            </a>
+        </div>
+
+        <!-- منو + نوشته زیر آن -->
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <!-- ردیف منو -->
+            <ul style="
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                gap: 20px;
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            ">
+                <li><a href="/">خانه</a></li>
+                <li><a href="/martyrs/list/">لیست شهدا</a></li>
+                <li><a href="{% url 'news:news_list' %}">اخبار</a></li>
+                <li><a href="{% url 'donate' %}">صدقه</a></li>
+
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
+                    <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
+                {% else %}
+                    <li><a href="{% url 'accounts:login' %}?next={% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
+                    <li><a href="{% url 'accounts:login' %}?next={% url 'accounts:dashboard' %}">پروفایل</a></li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                    <li>
+                        <a href="#">
+                            {% if user.gender == 'male' %}
+                                آقای {{ user.last_name }}
+                            {% elif user.gender == 'female' %}
+                                خانم {{ user.last_name }}
+                            {% else %}
+                                {{ user.get_full_name|default:user.phone }}
+                            {% endif %}
+                        </a>
+                        <ul class="profile-menu">
+                            <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
+                            <li><a href="{% url 'accounts:complete_profile' %}?phone={{ user.phone }}">ویرایش پروفایل</a></li>
+                            {% if user.allowed_categories.exists %}
+                                <li><a href="{% url 'news:create_news' %}">ارسال خبر</a></li>
+                            {% endif %}
+                            <li><a href="{% url 'martyrs:create_martyr' %}">افزودن شهید</a></li>
+                            {% if user.is_staff %}
                                 <li><a href="{% url 'accounts:user_list' %}">مدیریت کاربران</a></li>
                             {% endif %}
-                        <li><a href="{% url 'accounts:logout' %}">خروج</a></li>
-                    </ul>
-                </li>
-            {% else %}
-                <li><a href="{% url 'accounts:login' %}">ورود</a></li>
-            {% endif %}
-        </ul>
+                            <li><a href="{% url 'accounts:logout' %}">خروج</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="{% url 'accounts:login' %}">ورود</a></li>
+                {% endif %}
+            </ul>
+
+            <!-- نوشته زیر منو -->
+            <div style="margin-top: 10px; font-weight: bold; font-size: 1.2em; color: #004141;">
+                همه با هم 
+            </div>
+        </div>
     </nav>
 </header>
+
+
 
 {% if messages %}
   <div class="container mt-3">
@@ -175,28 +226,21 @@
     {% block content %}{% endblock %}
 </main>
 
-<footer>
-    <nav>
-        <ul>
-            <li><a href="{% url 'news:news_list' %}">اخبار</a></li>
-            {% if user.is_authenticated %}
-                <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
-            {% else %}
-                <li><a href="{% url 'accounts:login' %}?next={% url 'accounts:dashboard' %}">پروفایل</a></li>
-            {% endif %}
-
-            <!-- همیشه نمایش داده می‌شود -->
-            <li><a href="{% url 'donate' %}">صدقه</a></li>
-
-            <!-- لینک متفاوت بر اساس لاگین بودن -->
-            {% if user.is_authenticated %}
-                <li><a href="{% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
-            {% else %}
-                <li><a href="{% url 'accounts:login' %}?next={% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
-            {% endif %}
-        </ul>
-    </nav>
+<footer style="
+    background-color: #2bf7f7a6;
+    text-align: center;
+    padding: 1.5em;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #003c3c;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    border-top: 2px solid #2bf7f7a6;
+    letter-spacing: 1px;
+">
+    یار هم می‌مانیم 💚
 </footer>
+
 <!-- jQuery -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 
