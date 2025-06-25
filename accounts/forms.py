@@ -13,6 +13,7 @@ class PasswordLoginForm(forms.Form):
     password = forms.CharField(label='رمز عبور', widget=forms.PasswordInput)
 
 class ProfileCompletionForm(SetPasswordForm):
+    gender = forms.TypedChoiceField(label='عنوان',choices={('M', 'مرد'),('F', 'زن')})
     first_name = forms.CharField(label='نام', max_length=30)
     last_name = forms.CharField(label='نام خانوادگی', max_length=30)
 
@@ -37,3 +38,19 @@ class UserCategoryAccessForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['allowed_categories']
+
+
+from django import forms
+from .models import Persona
+
+class PersonaForm(forms.ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['name', 'persona_type', 'is_default']
+        labels = {
+            'name': 'نام شخصیت',
+            'persona_type': 'نوع شخصیت',
+            'is_default': 'پیش‌فرض باشد؟',
+        }
+
+

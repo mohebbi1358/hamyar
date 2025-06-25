@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}ثبت مراسم{% endblock %}
+
+{% block content %}
+<h1>ثبت مراسم</h1>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <button type="submit">ذخیره مراسم</button>
+</form>
+
+<a href="{% url 'eternals:list' %}">بازگشت به لیست</a>
+{% endblock %}

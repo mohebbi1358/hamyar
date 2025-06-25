@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}لیست جاودانه‌ها{% endblock %}
+
+{% block content %}
+  <style>
+    .eternals-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      padding: 20px;
+    }
+    .eternal-card {
+      width: 260px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      text-align: center;
+      transition: transform 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .eternal-card:hover {
+      transform: scale(1.03);
+    }
+    .eternal-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .eternal-info {
+      padding: 15px;
+      font-size: 14px;
+    }
+    .eternal-info h3 {
+      margin: 0 0 5px;
+      font-size: 16px;
+      color: #333;
+    }
+    .eternal-info p {
+      margin: 0;
+      color: #666;
+    }
+
+    @media (max-width: 600px) {
+      .eternal-card {
+        width: 90%;
+      }
+    }
+
+    .create-link {
+      display: block;
+      text-align: center;
+      margin: 20px auto;
+    }
+  </style>
+
+  <h2 style="text-align: center;">لیست جاودانه‌ها</h2>
+
+  <div class="create-link">
+    <a href="{% url 'eternals:create' %}" class="btn btn-success">افزودن جاودانه جدید</a>
+  </div>
+
+  <div class="eternals-grid">
+    {% for eternal in eternals %}
+      <a href="{% url 'eternals:detail' eternal.pk %}" class="eternal-card">
+        {% if eternal.image %}
+          <img src="{{ eternal.image.url }}" alt="{{ eternal }}">
+        {% else %}
+          <img src="https://via.placeholder.com/260x200?text=بدون+عکس" alt="بدون عکس">
+        {% endif %}
+        <div class="eternal-info">
+          <h3>{{ eternal.first_name }} {{ eternal.last_name }}</h3>
+          {% if eternal.known_as %}<p>{{ eternal.known_as }}</p>{% endif %}
+          {% if eternal.father_name %}<p>فرزند {{ eternal.father_name }}</p>{% endif %}
+          {% if eternal.death_date %}<p>{{ eternal.death_date|to_jalali }}</p>{% endif %}
+        </div>
+      </a>
+    {% empty %}
+      <p style="text-align: center;">هیچ جاودانه‌ای یافت نشد.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

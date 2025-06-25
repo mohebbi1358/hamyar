@@ -65,29 +65,34 @@ def martyr_list(request):
 
 
 # نمایش جزئیات شهید + نمایش دل‌نوشته‌ها + فرم ثبت دل‌نوشته
-def martyr_detail(request, martyr_id):
+from .forms import MartyrMemoryForm
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Martyr, MartyrMemory
+from .forms import MartyrMemoryForm
+
+def martyr_detail(request, martyr_id):  # ✅ اینجا اسم باید با urls.py بخونه
     martyr = get_object_or_404(Martyr, id=martyr_id)
-    memories = martyr.memories.all()  # thanks to related_name='memories'
+    memories = martyr.memories.select_related('user', 'persona').all()
 
     if request.method == 'POST':
-        if not request.user.is_authenticated:
-            return redirect(f'/accounts/login/?next=/martyrs/{martyr_id}/')  # یا URL لاگین مناسب
-
-        form = MartyrMemoryForm(request.POST, request.FILES)
+        form = MartyrMemoryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             memory = form.save(commit=False)
             memory.user = request.user
             memory.martyr = martyr
             memory.save()
-            return redirect('martyrs:martyr_detail', martyr_id=martyr.id)
+            return redirect('martyrs:martyr_detail', martyr_id=martyr.id)  # ✅ با اسم پارامتر یکی باشه
     else:
-        form = MartyrMemoryForm()
+        form = MartyrMemoryForm(user=request.user)
 
     return render(request, 'martyrs/martyr_detail.html', {
         'martyr': martyr,
+        'form': form,
         'memories': memories,
-        'form': form
     })
+
+
 
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin

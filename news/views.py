@@ -27,9 +27,45 @@ def news_list(request):
         'selected_category_id': int(selected_category_id) if selected_category_id else None
     })
 
+
+from .forms import CommentForm
+from .models import Comment
+
+
+from django.db.models import Case, When, Value, IntegerField
+
 def news_detail(request, news_id):
     news = get_object_or_404(News, id=news_id)
-    return render(request, 'news/news_detail.html', {'news': news})
+
+    comments = news.comments.filter(is_approved=True).select_related('persona').annotate(
+        persona_type_order=Case(
+            When(persona__persona_type='legal', then=Value(0)),
+            When(persona__persona_type='real', then=Value(1)),
+            default=Value(2),
+            output_field=IntegerField()
+        )
+    ).order_by('persona_type_order', '-created_at')
+
+    form = None
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = CommentForm(request.POST, user=request.user)
+            if form.is_valid():
+                comment = form.save(commit=False)
+                comment.news = news
+                comment.save()
+                return redirect('news:news_detail', news_id=news.id)
+        else:
+            form = CommentForm(user=request.user)
+
+    return render(request, 'news/news_detail.html', {
+        'news': news,
+        'comments': comments,
+        'form': form,
+    })
+
+
+
 
 @login_required
 def create_news(request):

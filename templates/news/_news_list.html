@@ -1,0 +1,22 @@
+<ul class="news-list" style="list-style-type: disc; padding-right: 40px;">
+    {% for item in page_obj %}
+        <li style="margin-bottom: 10px;">
+            <a href="{% url 'news:news_detail' item.id %}">
+                <strong>{{ item.title }}</strong>
+            </a>
+        </li>
+    {% empty %}
+        <li>هیچ خبری در این دسته وجود ندارد.</li>
+    {% endfor %}
+</ul>
+
+<!-- 🔽 Pagination -->
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="#" onclick="loadNews({{ category_id }}, {{ page_obj.previous_page_number }})">&laquo;</a>
+    {% endif %}
+    <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="#" onclick="loadNews({{ category_id }}, {{ page_obj.next_page_number }})">&raquo;</a>
+    {% endif %}
+</div>

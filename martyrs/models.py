@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from accounts.models import Persona
 
 class Martyr(models.Model):
     first_name = models.CharField("نام", max_length=50)
@@ -27,7 +28,7 @@ class Martyr(models.Model):
 class MartyrMemory(models.Model):
     martyr = models.ForeignKey(Martyr, on_delete=models.CASCADE, related_name='memories', verbose_name="شهید مربوطه")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="کاربر ارسال‌کننده")
-
+    persona = models.ForeignKey(Persona, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="شخصیت ارسال‌کننده")
     text = models.TextField("دل‌نوشته", blank=True, null=True)
     audio = models.FileField("فایل صوتی", upload_to='memories/audio/', blank=True, null=True)
     image = models.ImageField("تصویر", upload_to='memories/images/', blank=True, null=True)

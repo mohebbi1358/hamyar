@@ -7,5 +7,7 @@ urlpatterns = [
     path('gateway/wallet_charge/<int:wallet_tx_id>/', views.fake_wallet_charge_gateway, name='fake_wallet_charge_gateway'),
     path('gateway/<int:donation_id>/', views.fake_bank_gateway, name='fake_gateway'),  # مسیر درگاه پرداخت
     path('callback/<int:donation_id>/', views.payment_callback, name='payment_callback'),  # مسیر کال‌بک پرداخت
+    path('donate/<int:eternal_id>/', views.donate_for_eternal, name='donate_for_eternal'),
+
     
 ]

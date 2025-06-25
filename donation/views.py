@@ -116,3 +116,36 @@ def fake_wallet_charge_gateway(request, wallet_tx_id):
     # برای سادگی مستقیم ریدایرکت می‌کنیم به callback کیف پول با وضعیت موفق.
 
     return redirect(f'/wallet/charge/callback/{wallet_tx.id}/?status=OK&ref_id=FAKE12345')
+
+
+
+@login_required
+def donate_for_eternal(request, eternal_id):
+    eternal = get_object_or_404(Eternals, pk=eternal_id)
+    
+    if request.method == 'POST':
+        amount_str = request.POST.get('amount', '').replace(',', '')
+        pay_method = request.POST.get('pay_method')
+        cause = f"صدقه برای {eternal.name}"  # یا هر فیلدی که اسم اترنال رو داره
+
+        try:
+            amount = int(amount_str)
+            if amount < 1000:
+                messages.error(request, "حداقل مبلغ ۱۰۰۰ تومان است.")
+                return redirect('donations:donate_for_eternal', eternal_id=eternal_id)
+        except:
+            messages.error(request, "مبلغ وارد شده معتبر نیست.")
+            return redirect('donations:donate_for_eternal', eternal_id=eternal_id)
+
+        # کد پرداخت مشابه ویوی donate که قبلاً نوشتی
+        # مثلا با کیف پول یا درگاه بانکی...
+
+        # برای نمونه فقط پیام موفقیت:
+        messages.success(request, f"صدقه برای {eternal.name} ثبت شد.")
+        return redirect('eternals:detail', pk=eternal_id)
+
+    suggested_amounts = [10000, 25000, 40000, 60000, 100000]
+    return render(request, 'donation/donate_for_eternal.html', {
+        'eternal': eternal,
+        'suggested_amounts': suggested_amounts,
+    })

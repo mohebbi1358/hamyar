@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+{% block title %}ثبت یا ویرایش جاودانه{% endblock %}
+{% block content %}
+
+<h1>{% if form.instance.pk %}ویرایش{% else %}ثبت{% endif %} جاودانه</h1>
+
+{% if form.instance.pk %}
+<div style="border:1px solid #ddd;padding:10px;margin-bottom:20px;background:#f9f9f9">
+  <p><strong>{{ form.instance.first_name }} {{ form.instance.last_name }}</strong></p>
+  {% if form.instance.known_as %}<p>{{ form.instance.known_as }}</p>{% endif %}
+  {% if form.instance.description %}<p>{{ form.instance.description }}</p>{% endif %}
+  {% if form.instance.father_name %}<p>فرزند {{ form.instance.father_name }}</p>{% endif %}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">ذخیره</button>
+</form>
+<a href="{% url 'eternals:list' %}">بازگشت</a>
+
+{% endblock %}

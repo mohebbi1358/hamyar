@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}پیام تسلیت{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="bg-white border rounded shadow-sm p-4">
+        <h5 class="mb-3">پیام تسلیت از طرف {{ message.persona.name }}</h5>
+        <p>{{ message.message|linebreaks }}</p>
+        <a href="{% url 'eternals:detail' message.eternal.id %}" class="btn btn-secondary mt-3">بازگشت</a>
+    </div>
+</div>
+{% endblock %}

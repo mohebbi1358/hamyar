@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}مدیریت شخصیت‌ها{% endblock %}
+
+{% block content %}
+<h2>مدیریت شخصیت‌های کاربر: {{ target_user.get_full_name }}</h2>
+
+<!-- فرم افزودن شخصیت -->
+<h4>افزودن شخصیت جدید</h4>
+<form method="post" class="mb-4 border p-3 rounded">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">افزودن</button>
+</form>
+
+<!-- جدول لیست شخصیت‌ها -->
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>نام شخصیت</th>
+            <th>نوع</th>
+            <th>پیش‌فرض؟</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for persona in personas %}
+        <tr>
+            <td>{{ persona.name }}</td>
+            <td>{{ persona.get_persona_type_display }}</td>
+            <td>{{ persona.is_default|yesno:"بله,خیر" }}</td>
+            <td>
+                <a href="{% url 'accounts:edit_persona' persona.id %}">✏️</a>
+                <a href="{% url 'accounts:delete_persona' persona.id %}" onclick="return confirm('آیا مطمئن هستید؟')">🗑️</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-center">هیچ شخصیتی ثبت نشده.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

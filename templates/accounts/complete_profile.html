@@ -3,6 +3,16 @@
 
 {% block content %}
 <style>
+    .profile-form-container select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-family: inherit;
+    }
+
+
     .profile-form-container {
         max-width: 500px;
         margin: 40px auto;
@@ -63,9 +73,22 @@
 <div class="profile-form-container">
     <h2>تکمیل پروفایل</h2>
 
-    <form method="post">
-        {% csrf_token %}
+    <form method="post" action="{% url 'accounts:complete_profile' %}">
+    {% csrf_token %}
         <input type="hidden" name="phone" value="{{ user.phone }}">
+
+        <label for="gender">جنسیت:</label>
+        <select name="gender" id="gender" required>
+        <option value="" disabled selected>انتخاب کنید</option>
+        {% for code, label in gender_choices %}
+            <option value="{{ code }}" {% if code == user.gender %}selected{% endif %}>
+            {{ label }}
+            </option>
+        {% endfor %}
+        </select>
+
+
+
 
         <label for="first_name">نام:</label>
         <input type="text" name="first_name" id="first_name" value="{{ user.first_name }}" required>
@@ -74,7 +97,7 @@
         <input type="text" name="last_name" id="last_name" value="{{ user.last_name }}" required>
 
         <label for="password">رمز عبور جدید:</label>
-        <input type="password" name="password" id="password" required>
+        <input type="password" name="password" id="password" value="{{ user.last_name }}" required>
 
         <button type="submit">ذخیره تغییرات</button>
     </form>

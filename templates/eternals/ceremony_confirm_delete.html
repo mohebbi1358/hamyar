@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}حذف مراسم{% endblock %}
+
+{% block content %}
+<h1>آیا از حذف این مراسم مطمئن هستید؟</h1>
+<p>{{ object.ceremony }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">حذف</button>
+    <a href="{% url 'eternals:detail' object.eternal.id %}" class="btn btn-secondary">انصراف</a>
+</form>
+{% endblock %}

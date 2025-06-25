@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ eternal.first_name }} {{ eternal.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- ستون راست: تصویر و مشخصات جاودانه -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                {% if eternal.image %}
+                    <img src="{{ eternal.image.url }}" class="card-img-top" alt="تصویر {{ eternal.first_name }}">
+                {% else %}
+                    <img src="{% static 'images/default-eternal.jpg' %}" class="card-img-top" alt="بدون تصویر">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ eternal.first_name }} {{ eternal.last_name }}</h5>
+                    <ul class="list-unstyled">
+                        {% if eternal.known_as %}
+                            <li><strong>معروف به:</strong> {{ eternal.known_as }}</li>
+                        {% endif %}
+                        {% if eternal.father_name %}
+                            <li><strong>فرزند:</strong> {{ eternal.father_name }}</li>
+                        {% endif %}
+                        {% if eternal.death_date %}
+                            <li><strong>تاریخ فوت:</strong> {{ eternal.death_date|date:"Y/m/d" }}</li>
+                        {% endif %}
+                        {% if eternal.description %}
+                            <li><strong>توضیحات:</strong> {{ eternal.description }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ستون چپ: مراسم‌ها، پیام تسلیت، صدقه -->
+        <div class="col-md-8">
+            <!-- مراسم‌ها -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">آخرین مراسم‌ها</h5>
+                    <div>
+                        <a href="{% url 'eternals:eternal_ceremonies' eternal.id %}" class="btn btn-sm btn-outline-primary me-2">
+                            مشاهده همه
+                        </a>
+                        <a href="{% url 'eternals:add_ceremony' eternal.id %}" class="btn btn-sm btn-primary">
+                            افزودن مراسم
+                        </a>
+                    </div>
+                </div>
+
+                {% if eternal.ceremonies.all %}
+                    <ul class="list-group">
+                        {% for ceremony in eternal.ceremonies.all|dictsortreversed:"created_at"|slice:":5" %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>{{ ceremony.ceremony }}</strong>
+                                        {% if ceremony.date %}
+                                            <span class="text-muted">- {{ ceremony.date|date:"Y/m/d" }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if request.user == ceremony.user and ceremony.created_at|timesince < "2 minutes" %}
+                                        <div>
+                                            <a href="{% url 'eternals:edit_ceremony' ceremony.id %}" class="btn btn-sm btn-warning me-2">ویرایش</a>
+                                            <a href="{% url 'eternals:delete_ceremony' ceremony.id %}" class="btn btn-sm btn-danger">حذف</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">مراسمی ثبت نشده است.</p>
+                {% endif %}
+            </div>
+
+
+            <!-- بخش پیام‌های تسلیت -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">پیام‌های تسلیت</h5>
+                    <div>
+                        <a href="{% url 'eternals:condolence_list' eternal.id %}" class="btn btn-sm btn-outline-primary me-2">
+                            مشاهده همه
+                        </a>
+                        <a href="{% url 'eternals:add_condolence' eternal.id %}" class="btn btn-sm btn-primary">
+                            ارسال پیام تسلیت
+                        </a>
+                    </div>
+                </div>
+
+                {% for msg in condolences %}
+                    <div class="d-flex align-items-center mb-2">
+                        <a href="{% url 'eternals:condolence_detail' msg.id %}" 
+                        class="text-decoration-none text-dark"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="{{ msg.message|striptags }}">
+                            <strong>{{ msg.persona.name }}</strong>: 
+                            {{ msg.message|truncatechars:60 }}
+                        </a>
+                    </div>
+                {% empty %}
+                    <p>هنوز پیامی ثبت نشده است.</p>
+                {% endfor %}
+            </div>
+
+            <script>
+                // فعال‌سازی tooltipهای Bootstrap
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                })
+            </script>
+
+
+            <!-- صدقات -->
+            <div class="mb-4">
+                <h5 class="mb-3">صدقات انجام‌شده به نیت {{ eternal.first_name }}</h5>
+                {% if eternal.donations.all %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>مبلغ (تومان)</th>
+                                <th>بابت</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donation in eternal.donations.all %}
+                                <tr>
+                                    <td>{{ donation.amount|intcomma }}</td>
+                                    <td>{{ donation.get_cause_display }}</td>
+                                    <td>{{ donation.get_status_display }}</td>
+                                    <td>{{ donation.created_at|date:"Y/m/d" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-muted">تا کنون صدقه‌ای به نیت این جاودانه ثبت نشده است.</p>
+                {% endif %}
+            </div>
+
+            <!-- فرم ثبت صدقه -->
+            <div>
+                <h5 class="mb-3">ثبت صدقه به نیت {{ eternal.first_name }}</h5>
+                <form method="post" action="{% url 'donations:donate_for_eternal' eternal.id %}">
+                    {% csrf_token %}
+                    {{ donation_form.as_p }}
+                    <button type="submit" class="btn btn-success">پرداخت صدقه</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

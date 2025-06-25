@@ -43,11 +43,23 @@
   {% if user.is_authenticated %}
     <h3>ثبت دل‌نوشته</h3>
     <form method="post" enctype="multipart/form-data" style="margin-bottom: 30px;">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" style="padding: 8px 16px; background-color: #0055aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
-          ارسال
-        </button>
+      {% csrf_token %}
+
+      <label for="id_persona">شخصیت:</label>
+      {{ form.persona }}
+
+      <label for="id_text">متن دل‌نوشته:</label>
+      {{ form.text }}
+
+      <label for="id_image">تصویر:</label>
+      {{ form.image }}
+
+      <label for="id_audio">فایل صوتی:</label>
+      {{ form.audio }}
+
+      <button type="submit" style="padding: 8px 16px; background-color: #0055aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        ارسال
+      </button>
     </form>
   {% else %}
     <p style="text-align: center; margin-bottom: 30px;">
@@ -63,13 +75,19 @@
     {% for memory in memories %}
       <div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9;">
         
-        <p style="margin-bottom: 10px;">
+ <!--       <p style="margin-bottom: 10px;">
           <strong>کاربر:</strong>
           {% if memory.user.first_name or memory.user.last_name %}
             {{ memory.user.first_name }} {{ memory.user.last_name }}
           {% else %}
             -
           {% endif %}
+
+        </p>
+        -->
+
+        <p style="margin-bottom: 10px;">
+          <strong>شخصیت:</strong> {{ memory.persona.name }}
         </p>
 
         {% if memory.text %}

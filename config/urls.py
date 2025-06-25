@@ -1,19 +1,18 @@
 from django.contrib import admin
 from django.urls import path, include
-from news.views import home  # ✅ فقط این یکی
-
+from main.views import home
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
-    #path('accounts/', include('accounts.urls', namespace='accounts')),
-    path('donate/', include('donation.urls')),
+    path('donate/', include(('donation.urls', 'donation'), namespace='donations')),
     path('wallet/', include('wallet.urls')),
-    path('', home, name='home'),  # ✅ این حالا درست کار می‌کنه
+    path('', home, name='home'),
     path('martyrs/', include('martyrs.urls')),
     path('news/', include('news.urls')),
+    path('eternals/', include('eternals.urls', namespace='eternals')),
 ]
 
 if settings.DEBUG:

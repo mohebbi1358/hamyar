@@ -15,6 +15,7 @@
             <th>نام</th>
             <th>شماره موبایل</th>
             <th>دسترسی دسته‌بندی</th>
+            <th>شخصیت‌ها</th>
         </tr>
     </thead>
     <tbody>
@@ -25,11 +26,11 @@
             <td>
                 <a href="{% url 'accounts:assign_categories' user.id %}">تنظیم دسترسی</a>
             </td>
+            <td>
+                <a href="{% url 'accounts:manage_personas' user.id %}">شخصیت‌ها</a>
+            </td>
         </tr>
-        {% empty %}
-        <tr>
-            <td colspan="3" class="text-center">کاربری پیدا نشد.</td>
-        </tr>
+
         {% endfor %}
     </tbody>
 </table>

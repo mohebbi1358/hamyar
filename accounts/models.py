@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
+# در بالای فایل:
+from django.utils.translation import gettext_lazy as _
 
 class UserManager(BaseUserManager):
     def create_user(self, phone, password=None, **extra_fields):
@@ -72,3 +74,20 @@ class User(AbstractBaseUser, PermissionsMixin):
         prefix = self.get_gender_prefix()
         full_name = self.get_full_name()
         return f"{prefix} {full_name}".strip()
+
+
+
+
+class Persona(models.Model):
+    class PersonaType(models.TextChoices):
+        REAL = 'real', _('حقیقی')
+        LEGAL = 'legal', _('حقوقی')
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='personas')
+    name = models.CharField(max_length=255, verbose_name="عنوان شخصیت")
+    persona_type = models.CharField(max_length=10, choices=PersonaType.choices, verbose_name="نوع شخصیت")
+    is_default = models.BooleanField(default=False, verbose_name="پیش‌فرض")
+
+    def __str__(self):
+        return f"{self.name} ({self.get_persona_type_display()})"
+

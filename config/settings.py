@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'wallet',
     'news',
     'common',
+    'eternals',
 ]
 
 MIDDLEWARE = [

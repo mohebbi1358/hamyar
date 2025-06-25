@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}ارسال پیام تسلیت{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="bg-white border rounded shadow-sm p-4">
+        <h4 class="mb-4">ارسال پیام تسلیت</h4>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="mb-3">
+                <label for="{{ form.persona.id_for_label }}" class="form-label">شخصیت فرستنده:</label>
+                {{ form.persona }}
+                {{ form.persona.errors }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.message.id_for_label }}" class="form-label">متن پیام تسلیت:</label>
+                {{ form.message }}
+                {{ form.message.errors }}
+            </div>
+
+            <button type="submit" class="btn btn-primary">ارسال پیام</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

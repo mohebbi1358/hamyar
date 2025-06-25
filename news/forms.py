@@ -44,3 +44,36 @@ class CategoryForm(forms.ModelForm):
             'name': 'نام دسته‌بندی',
             'slug': 'نامک (slug)',
         }
+
+
+
+from django import forms
+from .models import Comment
+from accounts.models import Persona
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['persona', 'body']
+        widgets = {
+            'body': forms.Textarea(attrs={'rows': 3, 'placeholder': 'نظر خود را بنویسید...'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user:
+            personas = user.personas.all()
+            self.fields['persona'].queryset = personas
+
+            # انتخاب پیش‌فرض بر اساس نوع شخصیت
+            legal_persona = personas.filter(persona_type='legal').first()
+            real_persona = personas.filter(persona_type='real').first()
+
+            if not self.instance.pk:  # فقط برای ایجاد، نه ویرایش
+                if legal_persona:
+                    self.initial['persona'] = legal_persona
+                elif real_persona:
+                    self.initial['persona'] = real_persona

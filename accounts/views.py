@@ -120,6 +120,10 @@ def verify_view(request):
     phone = request.GET.get('phone')
     return render(request, 'accounts/verify.html', {'phone': phone})
 
+from .models import User  # مطمئن شو که ایمپورت شده
+
+from .models import Persona  # اضافه کن بالای فایل اگر نیست
+
 class CompleteProfileView(View):
     def get(self, request):
         user = request.user if request.user.is_authenticated else None
@@ -131,35 +135,57 @@ class CompleteProfileView(View):
         if not user:
             return redirect('login')
 
-        return render(request, 'accounts/complete_profile.html', {'user': user})
+        return render(request, 'accounts/complete_profile.html', {
+            'user': user,
+            'gender_choices': User.GENDER_CHOICES
+        })
+    
 
     def post(self, request):
+        # ← دریافت اطلاعات فرم
         phone = request.POST.get('phone')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         password = request.POST.get('password')
+        gender = request.POST.get('gender')
 
         user = User.objects.filter(phone=phone).first()
-
         if not user:
             return redirect('login')
 
-        if not all([first_name, last_name, password]):
+        if not all([first_name, last_name, password, gender]):
             return render(request, 'accounts/complete_profile.html', {
                 'error': 'تمام فیلدها الزامی است!',
-                'user': user
+                'user': user,
+                'gender_choices': User.GENDER_CHOICES
             })
 
+        # ← به‌روزرسانی اطلاعات کاربر
         user.first_name = first_name
         user.last_name = last_name
+        user.gender = gender
         user.set_password(password)
         user.is_profile_completed = True
         user.save()
 
-        login(request, user)
+        # ✅ اضافه کردن شخصیت حقیقی پیش‌فرض (در صورت نبود)
+        full_name = f"{first_name} {last_name}".strip()
+        real_persona = user.personas.filter(persona_type=Persona.PersonaType.REAL).first()
+        if real_persona:
+            real_persona.name = full_name
+            real_persona.save()
+        else:
+            Persona.objects.create(
+                user=user,
+                name=full_name,
+                persona_type=Persona.PersonaType.REAL,
+                is_default=True
+            )
 
-        #return redirect('dashboard') این خط
+        login(request, user)
         return redirect('home')
+
+
 
 from django.contrib.auth.decorators import login_required
 
@@ -224,3 +250,54 @@ def user_list(request):
         'users': users,
         'query': query,
     })
+
+
+from .forms import PersonaForm
+
+@staff_member_required
+def manage_user_personas(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    personas = user.personas.all()
+
+    if request.method == 'POST':
+        form = PersonaForm(request.POST)
+        if form.is_valid():
+            new_persona = form.save(commit=False)
+            new_persona.user = user
+            new_persona.save()
+            return redirect('accounts:manage_personas', user_id=user.id)
+    else:
+        form = PersonaForm()
+
+    return render(request, 'accounts/manage_personas.html', {
+        'target_user': user,
+        'personas': personas,
+        'form': form,
+    })
+
+
+@staff_member_required
+def edit_persona(request, persona_id):
+    persona = get_object_or_404(Persona, id=persona_id)
+    if request.method == 'POST':
+        form = PersonaForm(request.POST, instance=persona)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:manage_personas', user_id=persona.user.id)
+    else:
+        form = PersonaForm(instance=persona)
+    return render(request, 'accounts/edit_persona.html', {
+        'form': form,
+        'persona': persona
+    })
+
+
+@staff_member_required
+def delete_persona(request, persona_id):
+    persona = get_object_or_404(Persona, id=persona_id)
+    user_id = persona.user.id
+    persona.delete()
+    return redirect('accounts:manage_personas', user_id=user_id)
+
+
+

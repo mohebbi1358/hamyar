@@ -3,73 +3,101 @@
 
 {% block content %}
 
-
-<!-- 🔷 آخرین اخبار در کادر جدا -->
-<div style="background: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-    <h2 style="margin-top: 0;">آخرین اخبار:</h2>
-    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+<!-- 🔷 آخرین اخبار -->
+<div class="bg-white border rounded shadow-sm p-3 mb-4">
+    <h4>آخرین اخبار:</h4>
+    <div class="d-flex flex-wrap gap-3">
         {% for item in latest_news %}
-            {% if item.main_image %}
-            <div style="width: 180px; border: 1px solid #ddd; padding: 5px; text-align: center; border-radius: 6px; background-color: #fafafa;">
-                <a href="{% url 'news:news_detail' item.id %}" style="text-decoration: none; color: inherit;">
-                    <img src="{{ item.main_image.url }}" alt="{{ item.title }}"
-                         style="width: 100%; height: 120px; object-fit: cover; border-radius: 5px;">
-                    <p style="margin-top: 8px; font-size: 14px;">{{ item.title }}</p>
+            <div class="text-center border p-2 rounded" style="width: 180px; background-color: #fafafa;">
+                <a href="{% url 'news:news_detail' item.id %}" class="text-decoration-none text-dark">
+                    {% if item.main_image %}
+                        <img src="{{ item.main_image.url }}" alt="{{ item.title }}"
+                             style="width: 100%; height: 120px; object-fit: cover; border-radius: 5px;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center"
+                             style="width: 100%; height: 120px; border-radius: 5px;">
+                            بدون تصویر
+                        </div>
+                    {% endif %}
+                    <p class="mt-2 mb-0" style="font-size: 14px;">{{ item.title }}</p>
                 </a>
             </div>
-            {% else %}
-            <p>{{ item.title }} (بدون تصویر)</p>
-            {% endif %}
         {% endfor %}
     </div>
 </div>
 
-
-
-
-<!-- 🔷 دسته‌بندی و لیست اخبار در یک کادر -->
-<div style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-
-    <!-- 🔹 تب دسته‌بندی -->
-    <div style="margin-bottom: 20px;">
+<!-- 🔷 دسته‌بندی و لیست اخبار -->
+<div class="bg-white border rounded shadow-sm p-4">
+    <!-- دسته‌بندی -->
+    <div class="mb-3">
         <strong>دسته‌بندی:</strong>
-        <a href="{% url 'home' %}" style="margin-left: 10px; color: {% if not selected_category_id %}red{% else %}black{% endif %};">همه</a>
+        <a href="{% url 'home' %}"
+           class="ms-3 {% if not selected_category_id %}text-danger fw-bold{% endif %}">همه</a>
         {% for category in categories %}
-            <a href="?category={{ category.id }}" style="margin-left: 10px; color: {% if selected_category_id == category.id %}red{% else %}black{% endif %};">
+            <a href="?category={{ category.id }}"
+               class="ms-3 {% if selected_category_id == category.id %}text-danger fw-bold{% endif %}">
                 {{ category.name }}
             </a>
         {% endfor %}
     </div>
 
-    <!-- 🔹 لیست اخبار با عنوان -->
-    <ul class="news-list" style="list-style-type: disc; padding-right: 40px;">
+    <!-- لیست اخبار -->
+    <ul class="ps-4">
         {% for item in page_obj %}
-            {% if item.id %}
-            <li style="margin-bottom: 10px;">
-                <a href="{% url 'news:news_detail' item.id %}">
+            <li class="mb-2">
+                <a href="{% url 'news:news_detail' item.id %}" class="text-decoration-none">
                     <strong>{{ item.title }}</strong>
                 </a>
             </li>
-            {% endif %}
         {% empty %}
             <li>هیچ خبری در این دسته وجود ندارد.</li>
         {% endfor %}
     </ul>
 
-    <!-- 🔹 صفحه‌بندی -->
-    <div class="pagination" style="text-align: center; margin-top: 20px;">
+    <!-- صفحه‌بندی -->
+    <div class="pagination text-center mt-4">
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}">صفحه قبل</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}"
+               class="mx-2 text-primary text-decoration-none">⏪ صفحه قبل</a>
         {% endif %}
 
-        <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+        <span class="fw-bold">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
 
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}">صفحه بعد</a>
+            <a href="?page={{ page_obj.next_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}"
+               class="mx-2 text-primary text-decoration-none">صفحه بعد ⏩</a>
         {% endif %}
     </div>
 </div>
 
+
+<!-- 🔷 جاودانه‌ها -->
+ <div class="bg-white border rounded shadow-sm p-3 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">جاودانه‌ها</h4>
+        <a href="{% url 'eternals:list' %}" class="btn btn-sm btn-outline-primary">مشاهده همه</a>
+    </div>
+    <div class="d-flex flex-wrap gap-3">
+        {% for person in latest_eternals %}
+            <div class="text-center border p-2 rounded" style="width: 180px; background-color: #fafafa;">
+                <a href="{% url 'eternals:detail' person.id %}" class="text-decoration-none text-dark">
+                    {% if person.image %}
+                        <img src="{{ person.image.url }}" alt="{{ person }}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 5px;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center"
+                             style="width: 100%; height: 120px; border-radius: 5px;">
+                            بدون تصویر
+                        </div>
+                    {% endif %}
+                    <p class="mt-2 mb-0" style="font-size: 14px;">{{ person.first_name }} {{ person.last_name }}</p>
+                    <small class="text-muted">{{ person.death_date|date:"Y/m/d" }}</small>
+                </a>
+            </div>
+        {% empty %}
+            <p>هیچ جاودانه‌ای ثبت نشده است.</p>
+        {% endfor %}
+    </div>
+</div>
 
 
 {% endblock %}

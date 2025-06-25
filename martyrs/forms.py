@@ -72,13 +72,30 @@ class MartyrForm(forms.ModelForm):
 
 
 
+from django import forms
+from .models import MartyrMemory
+from accounts.models import Persona
+
 class MartyrMemoryForm(forms.ModelForm):
     class Meta:
         model = MartyrMemory
-        fields = ['text', 'audio', 'image']
+        fields = ['persona', 'text', 'image', 'audio']
         widgets = {
-            'text': forms.Textarea(attrs={'rows': 4, 'placeholder': 'دل‌نوشته خود را وارد کنید...'}),
+            'text': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            queryset = Persona.objects.filter(user=user)
+            self.fields['persona'].queryset = queryset
+
+            # 🔹 پیش‌فرض انتخاب حقیقی
+            real_persona = queryset.filter(persona_type='real').first()
+            if real_persona:
+                self.fields['persona'].initial = real_persona.pk
+
 
 
 class MartyrUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

@@ -13,6 +13,52 @@
     <meta charset="UTF-8">
     <title>{% block title %}سایت همیار{% endblock %}</title>
     <style>
+
+        form .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        }
+
+        form .form-label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #444;
+        }
+
+        form input[type="text"],
+        form input[type="file"],
+        form textarea,
+        form select {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+        box-sizing: border-box;
+        }
+
+        form .text-danger {
+        font-size: 13px;
+        color: #d32f2f;
+        margin-top: 5px;
+        }
+
+        form button.submit-btn {
+        margin-top: 30px;
+        width: 100%;
+        padding: 12px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: background-color 0.3s;
+        }
+
+        form button.submit-btn:hover {
+        background-color: #1976d2;
+        }
+
         
         
         
@@ -160,7 +206,7 @@
                 <li><a href="/">خانه</a></li>
                 <li><a href="/martyrs/list/">لیست شهدا</a></li>
                 <li><a href="{% url 'news:news_list' %}">اخبار</a></li>
-                <li><a href="{% url 'donate' %}">صدقه</a></li>
+                <li><a href="{% url 'donation:donate' %}">صدقه</a></li>
 
                 {% if user.is_authenticated %}
                     <li><a href="{% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
@@ -259,3 +305,5 @@
 {% block scripts %}{% endblock %}
 </body>
 </html>
+
+

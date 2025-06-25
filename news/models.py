@@ -25,3 +25,14 @@ class News(models.Model):
 class NewsImage(models.Model):
     news = models.ForeignKey(News, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='news/extra_images/')
+
+
+class Comment(models.Model):
+    news = models.ForeignKey(News, on_delete=models.CASCADE, related_name='comments')
+    persona = models.ForeignKey('accounts.Persona', on_delete=models.CASCADE)
+    body = models.TextField(verbose_name='متن نظر')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=True)  # برای آینده، الان همه تأیید شده هستن
+
+    def __str__(self):
+        return f"{self.persona.name} | {self.body[:30]}"
