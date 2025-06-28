@@ -6,6 +6,11 @@ from . import views
 app_name = 'eternals'
 
 urlpatterns = [
+    path('<int:pk>/', views.EternalsDetailView.as_view(), name='detail'),
+    path('<int:pk>/donations/', views.eternal_donations_list, name='eternal_donations_list'),
+    path('<int:pk>/donate/', views.donate_to_eternal, name='donate_to_eternal'),
+    path('<int:pk>/', views.EternalsDetailView.as_view(), name='detail'),
+    path('<int:pk>/donate/', views.donate_to_eternal, name='donate_to_eternal'),
     path('', views.EternalsListView.as_view(), name='list'),
     path('create/', views.EternalsCreateView.as_view(), name='create'),
     path('<int:pk>/', views.EternalsDetailView.as_view(), name='detail'),

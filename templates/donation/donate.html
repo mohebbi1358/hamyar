@@ -91,10 +91,28 @@
 </style>
 
 <div class="donate-container">
-  {% if martyr %}
+  {% if eternal %}
     <div style="text-align: center; margin-bottom: 20px;">
-      <p style="font-size: 18px;">این صدقه را به یاد شهید:</p>
-      
+      <p style="font-size: 18px; margin-bottom: 8px;">
+        این صدقه به نیت <strong>جاودانه</strong>:
+      </p>
+
+      {% if eternal.image %}
+        <img src="{{ eternal.image.url }}" alt="جاودانه" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-bottom: 10px;">
+      {% else %}
+        <div style="width: 100px; height: 100px; border-radius: 50%; background-color: #ccc; line-height: 100px; margin: 0 auto 10px;">
+          <span style="color: white;">بدون عکس</span>
+        </div>
+      {% endif %}
+
+      <h3 style="margin: 5px 0;">{{ eternal.first_name }} {{ eternal.last_name }}</h3>
+    </div>
+  {% elif martyr %}
+    <div style="text-align: center; margin-bottom: 20px;">
+      <p style="font-size: 18px; margin-bottom: 8px;">
+        این صدقه به یاد <strong>جاودانه شهید</strong>:
+      </p>
+
       {% if martyr.photo %}
         <img src="{{ martyr.photo.url }}" alt="شهید" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-bottom: 10px;">
       {% else %}
@@ -102,13 +120,21 @@
           <span style="color: white;">بدون عکس</span>
         </div>
       {% endif %}
-      
-      <h3 style="margin: 5px 0;">{{ martyr.first_name }} {{ martyr.last_name }}</h3>
+
+      <h3 style="margin: 5px 0;">شهید {{ martyr.first_name }} {{ martyr.last_name }}</h3>
     </div>
   {% endif %}
 
-
-  <form method="post" action="{% url 'donate' %}" id="donate-form">
+  <form method="post" 
+    {% if eternal %}
+      action="{% url 'donations:donate_for_eternal' eternal.id %}"
+    {% elif martyr %}
+      action="{% url 'donations:donate_for_martyr' martyr.id %}"
+    {% else %}
+      action="{% url 'donation:donate' %}"
+    {% endif %}
+    id="donate-form"
+  >
     {% csrf_token %}
     
     <label for="amount">مبلغ (تومان):</label>
@@ -117,7 +143,7 @@
 
     <div class="suggested-amounts">
       {% for val in suggested_amounts %}
-      <button type="button" class="amount-btn" data-amount="{{ val }}">{{ val|intcomma }}</button>
+        <button type="button" class="amount-btn" data-amount="{{ val }}">{{ val|intcomma }}</button>
       {% endfor %}
     </div>
 
@@ -141,17 +167,14 @@
   const amountInput = document.getElementById('amount');
   const amountDisplay = document.getElementById('amount-display');
 
-  // فرمت عدد با جداکننده سه‌رقمی
   function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  // پاک کردن کاماها
   function cleanNumber(str) {
     return str.replace(/,/g, '');
   }
 
-  // به‌روزرسانی نمایش زیر فیلد
   function updateAmountDisplay() {
     const rawVal = cleanNumber(amountInput.value);
     const numVal = parseInt(rawVal, 10);
@@ -162,12 +185,10 @@
     }
   }
 
-  // هنگام وارد کردن مقدار، فرمت کن و نمایش رو آپدیت کن
-  amountInput.addEventListener('input', (e) => {
+  amountInput.addEventListener('input', () => {
     let cursorPos = amountInput.selectionStart;
     let oldVal = amountInput.value;
 
-    // فقط اعداد و کاما مجاز
     let cleaned = oldVal.replace(/[^\d]/g, '');
     if (cleaned === '') {
       amountInput.value = '';
@@ -179,16 +200,13 @@
 
     amountInput.value = formatted;
 
-    // تلاش برای حفظ مکان کرسر
+    // حفظ مکان کرسر تا حد امکان
     let diff = formatted.length - oldVal.length;
     amountInput.selectionStart = amountInput.selectionEnd = cursorPos + diff;
 
     updateAmountDisplay();
   });
 
-  // وقتی فیلد خارج میشه کاماها حذف نشه (برعکس کد قبلی)
-
-  // وقتی دکمه مبلغ پیشنهادی زده میشه، مقدار رو ست کن و نمایش رو آپدیت کن
   document.querySelectorAll('.amount-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const val = btn.getAttribute('data-amount');
@@ -198,7 +216,6 @@
     });
   });
 
-  // اعتبارسنجی فرم و نمایش خلاصه هنگام ارسال (به جای confirm ساده)
   document.getElementById('donate-form').addEventListener('submit', function(e) {
     const val = cleanNumber(amountInput.value);
     const amount = parseInt(val);

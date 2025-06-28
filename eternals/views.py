@@ -21,6 +21,19 @@ from django.db.models import Case, When, IntegerField
 from .models import Eternals, CondolenceMessage
 
 
+
+from django.views.generic import DetailView
+from django.db.models import Prefetch
+from martyrs.models import Martyr
+from donation.models import Donation
+from eternals.models import CondolenceMessage
+from .models import Eternals
+
+
+from donation.forms import DonationForm
+
+from django.db.models import Sum
+
 class EternalsDetailView(DetailView):
     model = Eternals
     template_name = "eternals/eternals_detail.html"
@@ -30,14 +43,24 @@ class EternalsDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         eternal = self.get_object()
 
-        # فقط ۵ پیام تسلیت آخر بر اساس زمان ارسال
         condolences = CondolenceMessage.objects.filter(
             eternal=eternal
         ).select_related('persona').order_by('-created_at')[:5]
 
-        context['condolences'] = condolences
-        return context
+        donations_qs = Donation.objects.filter(
+            eternal=eternal,
+            status='SUCCESS'
+        ).select_related('user', 'wallet_transaction').order_by('-created_at')
 
+        donations = donations_qs[:5]
+
+        donations_total = donations_qs.aggregate(total=Sum('amount'))['total'] or 0
+
+        context['condolences'] = condolences
+        context['donations'] = donations
+        context['donations_total'] = donations_total
+        context['donation_form'] = DonationForm()
+        return context
 
 
 
@@ -225,3 +248,51 @@ class CondolenceListView(ListView):
         context = super().get_context_data(**kwargs)
         context['eternal'] = Eternals.objects.get(id=self.kwargs['eternal_id'])
         return context
+
+
+
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from donation.forms import DonationForm
+from donation.models import Donation
+
+@login_required
+def donate_to_eternal(request, pk):
+    eternal = get_object_or_404(Eternals, pk=pk)
+    if request.method == 'POST':
+        form = DonationForm(request.POST)
+        if form.is_valid():
+            donation = form.save(commit=False)
+            donation.eternal = eternal
+            donation.user = request.user
+            donation.status = 'PENDING'  # یا هر چیزی که مناسبه
+            donation.save()
+            messages.success(request, "صدقه با موفقیت ثبت شد.")
+            return redirect('eternals:detail', pk=pk)
+        else:
+            messages.error(request, "اطلاعات وارد شده معتبر نیست.")
+    else:
+        form = DonationForm()
+    return render(request, 'eternals/donate_form.html', {'form': form, 'eternal': eternal})
+
+
+# eternals/views.py
+from django.shortcuts import render, get_object_or_404
+from donation.models import Donation
+
+from django.db.models import Sum
+
+def eternal_donations_list(request, pk):
+    eternal = get_object_or_404(Eternals, pk=pk)
+    donations = Donation.objects.filter(eternal=eternal, status='SUCCESS').order_by('-created_at')
+
+    donations_total = donations.aggregate(total=Sum('amount'))['total'] or 0
+
+    return render(request, 'eternals/eternal_donations_list.html', {
+        'eternal': eternal,
+        'donations': donations,
+        'donations_total': donations_total,
+    })
+
+

@@ -8,11 +8,11 @@
   <p><strong>مبلغ:</strong> {{ donation.amount|intcomma }} تومان</p>
   <p><strong>بابت:</strong> {{ donation.get_cause_display }}</p>
 
-  <a href="{% url 'payment_callback' donation.id %}?status=OK&ref_id=ABC123" style="display:inline-block;margin:10px;padding:10px 20px;background:#28a745;color:white;border-radius:8px;text-decoration:none;">
+  <a href="{% url 'donation:payment_callback' donation.id %}?status=OK&ref_id=ABC123" style="display:inline-block;margin:10px;padding:10px 20px;background:#28a745;color:white;border-radius:8px;text-decoration:none;">
     پرداخت موفق
   </a>
 
-  <a href="{% url 'payment_callback' donation.id %}?status=FAIL" style="display:inline-block;margin:10px;padding:10px 20px;background:#dc3545;color:white;border-radius:8px;text-decoration:none;">
+  <a href="{% url 'donation:payment_callback' donation.id %}?status=FAIL" style="display:inline-block;margin:10px;padding:10px 20px;background:#dc3545;color:white;border-radius:8px;text-decoration:none;">
     پرداخت ناموفق
   </a>
 </div>

@@ -7,7 +7,6 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row">
-        <!-- ستون راست: تصویر و مشخصات جاودانه -->
         <div class="col-md-4">
             <div class="card mb-4">
                 {% if eternal.image %}
@@ -35,7 +34,7 @@
             </div>
         </div>
 
-        <!-- ستون چپ: مراسم‌ها، پیام تسلیت، صدقه -->
+
         <div class="col-md-8">
             <!-- مراسم‌ها -->
             <div class="mb-4">
@@ -78,29 +77,20 @@
                 {% endif %}
             </div>
 
-
-            <!-- بخش پیام‌های تسلیت -->
+            <!-- پیام‌های تسلیت -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="mb-0">پیام‌های تسلیت</h5>
                     <div>
-                        <a href="{% url 'eternals:condolence_list' eternal.id %}" class="btn btn-sm btn-outline-primary me-2">
-                            مشاهده همه
-                        </a>
-                        <a href="{% url 'eternals:add_condolence' eternal.id %}" class="btn btn-sm btn-primary">
-                            ارسال پیام تسلیت
-                        </a>
+                        <a href="{% url 'eternals:condolence_list' eternal.id %}" class="btn btn-sm btn-outline-primary me-2">مشاهده همه</a>
+                        <a href="{% url 'eternals:add_condolence' eternal.id %}" class="btn btn-sm btn-primary">ارسال پیام تسلیت</a>
                     </div>
                 </div>
 
                 {% for msg in condolences %}
                     <div class="d-flex align-items-center mb-2">
-                        <a href="{% url 'eternals:condolence_detail' msg.id %}" 
-                        class="text-decoration-none text-dark"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        title="{{ msg.message|striptags }}">
-                            <strong>{{ msg.persona.name }}</strong>: 
+                        <a href="{% url 'eternals:condolence_detail' msg.id %}" class="text-decoration-none text-dark" data-bs-toggle="tooltip" title="{{ msg.message|striptags }}">
+                            <strong>{{ msg.persona.name }}</strong>:
                             {{ msg.message|truncatechars:60 }}
                         </a>
                     </div>
@@ -109,54 +99,49 @@
                 {% endfor %}
             </div>
 
-            <script>
-                // فعال‌سازی tooltipهای Bootstrap
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-                tooltipTriggerList.map(function (tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl)
-                })
-            </script>
-
-
             <!-- صدقات -->
             <div class="mb-4">
-                <h5 class="mb-3">صدقات انجام‌شده به نیت {{ eternal.first_name }}</h5>
-                {% if eternal.donations.all %}
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>مبلغ (تومان)</th>
-                                <th>بابت</th>
-                                <th>وضعیت</th>
-                                <th>تاریخ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for donation in eternal.donations.all %}
-                                <tr>
-                                    <td>{{ donation.amount|intcomma }}</td>
-                                    <td>{{ donation.get_cause_display }}</td>
-                                    <td>{{ donation.get_status_display }}</td>
-                                    <td>{{ donation.created_at|date:"Y/m/d" }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p class="text-muted">تا کنون صدقه‌ای به نیت این جاودانه ثبت نشده است.</p>
-                {% endif %}
-            </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">آخرین صدقات ثبت شده</h5>
+                    <div>
+                        
+                        
+                        <a href="{% url 'eternals:eternal_donations_list' eternal.id %}" class="btn btn-sm btn-outline-primary me-2">
+                            مشاهده همه (جمع کل: {{ donations_total|intcomma }} تومان)
+                        </a>
+                        <a href="{% url 'donations:donate_for_eternal' eternal.id %}" class="btn btn-sm btn-success">ثبت صدقه</a>
+                    </div>
+                </div>
 
-            <!-- فرم ثبت صدقه -->
-            <div>
-                <h5 class="mb-3">ثبت صدقه به نیت {{ eternal.first_name }}</h5>
-                <form method="post" action="{% url 'donations:donate_for_eternal' eternal.id %}">
-                    {% csrf_token %}
-                    {{ donation_form.as_p }}
-                    <button type="submit" class="btn btn-success">پرداخت صدقه</button>
-                </form>
+                {% if donations %}
+                    <ul class="list-group">
+                        {% for donation in donations|slice:":5" %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ donation.user.get_display_name|default:donation.user.phone }}</strong>
+                                    → {{ donation.amount|intcomma }} تومان
+                                    → بابت {{ donation.get_cause_display }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ donation.created_at|date:"Y/m/d" }}
+                                </small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>هیچ صدقه‌ای ثبت نشده است.</p>
+                {% endif %}
+
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+
 {% endblock %}
