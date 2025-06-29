@@ -205,6 +205,7 @@
             ">
                 <li><a href="/">خانه</a></li>
                 <li><a href="/martyrs/list/">شهدا</a></li>
+                <li><a href="{% url 'eternals:list' %}">جاودانه‌ها</a></li>
                 <li><a href="{% url 'news:news_list' %}">اخبار</a></li>
                 <li><a href="{% url 'donation:donate' %}">صدقه</a></li>
 
@@ -230,15 +231,21 @@
                         <ul class="profile-menu">
                             <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
                             <li><a href="{% url 'accounts:complete_profile' %}?phone={{ user.phone }}">ویرایش پروفایل</a></li>
+
                             {% if user.allowed_categories.exists %}
                                 <li><a href="{% url 'news:create_news' %}">ارسال خبر</a></li>
+                                <li><a href="{% url 'eternals:create' %}">افزودن جاودانه جدید</a></li>
                             {% endif %}
+
                             <li><a href="{% url 'martyrs:create_martyr' %}">افزودن شهید</a></li>
+
                             {% if user.is_staff %}
                                 <li><a href="{% url 'accounts:user_list' %}">مدیریت کاربران</a></li>
                             {% endif %}
+
                             <li><a href="{% url 'accounts:logout' %}">خروج</a></li>
                         </ul>
+
                     </li>
                 {% else %}
                     <li><a href="{% url 'accounts:login' %}">ورود</a></li>

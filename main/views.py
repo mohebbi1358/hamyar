@@ -32,3 +32,33 @@ def home(request):
         'page_obj': page_obj,
         'latest_eternals': latest_eternals,
     })
+
+
+
+import requests
+
+class MeliPayamakAPI:
+    BASE_URL = 'https://api.payamak-panel.com/post/Send.asmx/SendSimpleSMS2'
+
+    def __init__(self, username, password, sender_number):
+        self.username = username
+        self.password = password
+        self.sender_number = sender_number
+
+    def send_sms(self, to_number, text, is_flash=False):
+        params = {
+            'username': self.username,
+            'password': self.password,
+            'from': self.sender_number,
+            'to': to_number,
+            'text': text,
+            'isflash': str(is_flash).lower()
+        }
+        try:
+            response = requests.get(self.BASE_URL, params=params)
+            response.raise_for_status()
+            return response.text  # یا می‌تونی کد پاسخ را اینجا پردازش کنی
+        except requests.RequestException as e:
+            # لاگ کردن خطا یا مدیریت خطا در اینجا
+            print(f"Error sending SMS: {e}")
+            return None

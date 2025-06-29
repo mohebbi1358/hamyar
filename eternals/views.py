@@ -1,3 +1,4 @@
+from .models import Eternals
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView
 from django.contrib import messages
@@ -94,15 +95,36 @@ class EternalsCreateView(CreateView):
     success_url = reverse_lazy('eternals:list')
 
 
+# views.py
+
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
+from django.views.generic import CreateView
+from .models import Ceremony, Eternals
+from .forms import CeremonyForm
+
 class CeremonyCreateView(CreateView):
     model = Ceremony
     form_class = CeremonyForm
     template_name = 'eternals/ceremony_form.html'
-    success_url = reverse_lazy('eternals:list')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Eternal رو ذخیره می‌کنیم تا در متدهای دیگه استفاده کنیم
+        self.eternal = get_object_or_404(Eternal, id=self.kwargs['eternal_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['eternal'] = self.eternal
+        return context
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        form.instance.eternal = self.eternal
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('eternals:detail', kwargs={'pk': self.eternal.id})
 
 
 @login_required
@@ -127,19 +149,57 @@ def add_ceremony(request, eternal_id):
     })
 
 
+
+
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
+from django.views.generic import CreateView
+from .models import CondolenceMessage, Eternals, Persona
+from .forms import CondolenceMessageForm
+
 class CondolenceMessageCreateView(CreateView):
     model = CondolenceMessage
     form_class = CondolenceMessageForm
     template_name = 'eternals/condolence_form.html'
-    success_url = reverse_lazy('eternals:list')
 
     def dispatch(self, request, *args, **kwargs):
-        self.persona = get_object_or_404(Persona, id=kwargs['persona_id'])
+        self.eternal = get_object_or_404(Eternals, id=kwargs['eternal_id'])
+        self.persona = request.user.personas.filter(is_default=True).first()
+        if not self.persona:
+            # یا redirect کن به صفحه انتخاب persona
+            raise Http404("هیچ شخصیتی برای این کاربر ثبت نشده است.")
         return super().dispatch(request, *args, **kwargs)
+    
+
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['eternal'] = self.eternal
+        context['persona'] = self.persona
+        return context
 
     def form_valid(self, form):
         form.instance.persona = self.persona
+        form.instance.eternal = self.eternal
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('eternals:detail', kwargs={'pk': self.eternal.id})
+
+
+
+
+
+
+
 
 
 def eternal_ceremony_list(request, eternal_id):
@@ -190,34 +250,6 @@ class CeremonyDeleteView(DeleteView):
 
 
 
-
-from django.views.generic.edit import CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
-from .models import CondolenceMessage, Eternals
-from .forms import CondolenceMessageForm
-
-class CondolenceMessageCreateView(LoginRequiredMixin, CreateView):
-    model = CondolenceMessage
-    form_class = CondolenceMessageForm
-    template_name = 'eternals/condolence_form.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.eternal = get_object_or_404(Eternals, id=self.kwargs['eternal_id'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # برای محدود کردن personaها
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.eternal = self.eternal
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy('eternals:detail', kwargs={'pk': self.eternal.id})
 
 
 

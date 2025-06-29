@@ -1,45 +1,67 @@
-# templates/news/news_detail.html
-
 {% extends 'base.html' %}
 {% load jalali_filters %}
 {% block content %}
-<h1>{{ news.title }}</h1>
-<img src="{{ news.main_image.url }}" alt="" width="400">
-<p>{{ news.summary }}</p>
-<div>{{ news.body }}</div>
+<div class="container my-5">
 
-<h3>تصاویر دیگر</h3>
-<ul>
-    {% for img in news.images.all %}
-        <li><img src="{{ img.image.url }}" alt="" width="200"></li>
-    {% endfor %}
-</ul>
+  <button onclick="history.back()" class="btn btn-outline-secondary mb-4">
+    ← بازگشت
+  </button>
 
-<hr>
-<h3>نظرات</h3>
+  <div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+      <h1 class="mb-3 text-center">{{ news.title }}</h1>
+      <img src="{{ news.main_image.url }}" alt="" class="img-fluid rounded mb-4">
+      <p class="lead">{{ news.summary }}</p>
+      <div class="mt-4">
+        {{ news.body|safe }}
+      </div>
+    </div>
+  </div>
 
-<ul>
-    {% for comment in comments %}
-        <li>
-            <strong>{{ comment.persona.name }}</strong> - <small>{{ comment.created_at|to_jalali }}</small>
-            <p>{{ comment.body }}</p>
-        </li>
-    {% empty %}
-        <li>نظری ثبت نشده است.</li>
-    {% endfor %}
-</ul>
+  {% if news.images.all %}
+    <div class="row mb-5">
+      <h3 class="mb-3">تصاویر دیگر</h3>
+      {% for img in news.images.all %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3">
+          <img src="{{ img.image.url }}" alt="" class="img-fluid rounded">
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-{% if user.is_authenticated %}
-    <hr>
-    <h4>افزودن نظر</h4>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">ارسال نظر</button>
-    </form>
-{% else %}
-    <p>برای ارسال نظر ابتدا وارد حساب کاربری شوید.</p>
-{% endif %}
+  <hr class="my-5">
 
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <h3 class="mb-4">نظرات</h3>
 
+      <ul class="list-unstyled">
+        {% for comment in comments %}
+          <li class="mb-4 border rounded p-3">
+            <div class="d-flex justify-content-between mb-2">
+              <strong>{{ comment.persona.name }}</strong>
+              <small class="text-muted">{{ comment.created_at|to_jalali }}</small>
+            </div>
+            <p class="mb-0">{{ comment.body }}</p>
+          </li>
+        {% empty %}
+          <li>نظری ثبت نشده است.</li>
+        {% endfor %}
+      </ul>
+
+      {% if user.is_authenticated %}
+        <hr class="my-5">
+        <h4 class="mb-3">افزودن نظر</h4>
+        <form method="post" class="border rounded p-4 bg-light">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-primary">ارسال نظر</button>
+        </form>
+      {% else %}
+        <p class="mt-4 alert alert-warning text-center">برای ارسال نظر ابتدا وارد حساب کاربری شوید.</p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
 {% endblock %}

@@ -2,14 +2,26 @@
 {% block title %}ثبت مراسم{% endblock %}
 
 {% block content %}
-<h1>ثبت مراسم</h1>
+<div class="container my-5">
 
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">ثبت مراسم</h1>
+    <a href="{% url 'eternals:detail' pk=eternal.id %}" class="btn btn-outline-secondary">
+      ← بازگشت به جزئیات جاودانه
+    </a>
+  </div>
 
-  <button type="submit">ذخیره مراسم</button>
-</form>
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
 
-<a href="{% url 'eternals:list' %}">بازگشت به لیست</a>
+      <form method="post" class="border rounded p-4 bg-light shadow-sm">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary mt-3">ذخیره مراسم</button>
+      </form>
+
+    </div>
+  </div>
+
+</div>
 {% endblock %}

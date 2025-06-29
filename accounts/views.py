@@ -1,3 +1,7 @@
+import re
+
+from main.views import MeliPayamakAPI
+from django.conf import settings
 from django.contrib.auth import login, get_user_model
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -33,7 +37,14 @@ class SendSMSCodeView(APIView):
             'time': current_time
         }
 
-        print(f"[SMS to {phone}] Code: {code}")
+        api = MeliPayamakAPI(
+            username=settings.MELI_PAYAMAK_USERNAME,
+            password=settings.MELI_PAYAMAK_PASSWORD,
+            sender_number=settings.MELI_PAYAMAK_SENDER
+        )
+        sms_text = f"کد ورود شما: {code}"
+        result = api.send_sms(phone, sms_text)
+
         return Response({"detail": "Code sent"}, status=200)
 
 class VerifySMSCodeView(APIView):
@@ -58,7 +69,46 @@ class VerifySMSCodeView(APIView):
         user, created = User.objects.get_or_create(phone=phone)
         return Response({"detail": "Code verified, continue to profile"}, status=200)
 
+
 # --- Template Views ---
+
+
+
+
+
+
+from django.conf import settings
+from django.contrib.auth import login, get_user_model
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.utils.crypto import get_random_string
+from datetime import timedelta
+from main.views import MeliPayamakAPI
+from .models import User
+
+# حافظه موقتی برای ذخیره کدهای پیامک
+SMS_CODE_STORAGE = {}
+
+# خطاهای ملی پیامک
+MELI_PAYAMAK_ERRORS = {
+    0: 'نام کاربری یا رمز عبور اشتباه است.',
+    2: 'اعتبار کافی نمی‌باشد.',
+    3: 'محدودیت در ارسال روزانه.',
+    4: 'محدودیت در حجم ارسال.',
+    5: 'شماره فرستنده معتبر نمی‌باشد.',
+    6: 'سامانه در حال بروزرسانی می‌باشد.',
+    7: 'متن حاوی کلمه فیلتر شده می‌باشد.',
+    9: 'ارسال از خطوط عمومی از طریق وب‌سرویس امکان‌پذیر نمی‌باشد.',
+    10: 'کاربر مورد نظر فعال نمی‌باشد.',
+    11: 'پیام ارسال نشده است.',
+    12: 'مدارک کاربر کامل نمی‌باشد.',
+    14: 'متن حاوی لینک می‌باشد.',
+    15: 'ارسال به بیش از 1 شماره بدون درج "لغو11" ممکن نیست.',
+    16: 'شماره گیرنده یافت نشد.',
+    17: 'متن پیامک خالی است.',
+    35: 'شماره در لیست سیاه مخابرات قرار دارد.',
+}
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -79,26 +129,57 @@ def login_view(request):
 
             if user and user.check_password(password):
                 login(request, user)
-                #return redirect('accounts:dashboard') این هم
                 return redirect('home')
             else:
                 return render(request, 'accounts/login.html', {'error': 'شماره یا رمز اشتباه است'})
 
+        
+        
+        
+        
         elif action == 'send_code':
             now = timezone.now()
             if phone in SMS_CODE_STORAGE:
                 last_sent = SMS_CODE_STORAGE[phone]['time']
                 if now - last_sent < timedelta(minutes=2):
-                    return render(request, 'accounts/login.html', {'error': 'هر دو دقیقه فقط یک‌بار می‌توان درخواست داد'})
+                    return render(request, 'accounts/login.html', {
+                        'error': 'هر دو دقیقه فقط یک‌بار می‌توان درخواست داد'
+                    })
 
             code = get_random_string(length=4, allowed_chars='1234567890')
             SMS_CODE_STORAGE[phone] = {'code': code, 'time': now}
 
-            print(f"[SMS to {phone}] Code: {code}")
+            api = MeliPayamakAPI(
+                username=settings.MELI_PAYAMAK_USERNAME,
+                password=settings.MELI_PAYAMAK_PASSWORD,
+                sender_number=settings.MELI_PAYAMAK_SENDER
+            )
+            sms_text = f"کد ورود شما: {code}"
+            result = api.send_sms(phone, sms_text)
+
+            print("RESULT FROM MELI PAYAMAK:", result)
+
+            result_code = 0
+            if result:
+                # اگر XML است، عدد را از وسط تگ <string> بیرون بکش
+                match = re.search(r'>(\d+)<', result)
+                if match:
+                    result_code = int(match.group(1))
+
+            if result_code <= 0:
+                error_msg = MELI_PAYAMAK_ERRORS.get(result_code, 'خطا در ارسال پیامک. لطفاً بعداً تلاش کنید.')
+                return render(request, 'accounts/login.html', {'error': error_msg})
+
+            # اگر ارسال موفق بود:
             from django.urls import reverse
             return redirect(f"{reverse('accounts:verify')}?phone={phone}")
 
-    return render(request, 'accounts/login.html')
+
+
+
+
+
+
 
 def verify_view(request):
     if request.method == 'POST':
@@ -207,8 +288,14 @@ def logout_view(request):
 
 
 
-from .forms import UserCategoryAccessForm
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
+from .forms import UserCategoryAccessForm
+from .models import User
 
 @user_passes_test(lambda u: u.is_staff)
 def assign_categories_to_user(request, user_id):
@@ -217,12 +304,16 @@ def assign_categories_to_user(request, user_id):
         form = UserCategoryAccessForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
-            #return redirect('accounts:dashboard')  # یا مسیر دلخواه شما
-            return redirect('home')  # یا مسیر دلخواه شما
+            # ریدایرکت به صفحه manage_personas برای همان user
+            return redirect('accounts:user_list')
     else:
         form = UserCategoryAccessForm(instance=user)
 
     return render(request, 'accounts/assign_categories.html', {'form': form, 'target_user': user})
+
+
+
+
 
 
 

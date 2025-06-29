@@ -3,6 +3,9 @@
 
 {% block content %}
 <h4>مراسم‌های {{ eternal.first_name }} {{ eternal.last_name }}</h4>
+  <button onclick="history.back()" class="btn btn-outline-secondary mb-4">
+    ← بازگشت
+  </button>
 
 <ul class="list-group mt-3">
     {% for ceremony in ceremonies %}

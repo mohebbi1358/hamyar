@@ -4,6 +4,9 @@
 {% block content %}
 <div class="container mt-4">
     <h4>پیام‌های تسلیت برای {{ eternal.name }}</h4>
+        <button onclick="history.back()" class="btn btn-outline-secondary mb-4">
+            ← بازگشت
+        </button>
 
     {% if condolences %}
         <ul class="list-group my-3">

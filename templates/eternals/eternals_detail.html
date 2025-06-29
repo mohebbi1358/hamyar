@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load jalali_filters %}
+
 {% load humanize %}
 {% load static %}
 
@@ -83,7 +85,9 @@
                     <h5 class="mb-0">پیام‌های تسلیت</h5>
                     <div>
                         <a href="{% url 'eternals:condolence_list' eternal.id %}" class="btn btn-sm btn-outline-primary me-2">مشاهده همه</a>
-                        <a href="{% url 'eternals:add_condolence' eternal.id %}" class="btn btn-sm btn-primary">ارسال پیام تسلیت</a>
+                        <a href="{% url 'eternals:condolence_create' eternal_id=eternal.id %}" class="btn btn-sm btn-primary">
+                            ارسال پیام تسلیت
+                        </a>
                     </div>
                 </div>
 
@@ -123,7 +127,7 @@
                                     → بابت {{ donation.get_cause_display }}
                                 </div>
                                 <small class="text-muted">
-                                    {{ donation.created_at|date:"Y/m/d" }}
+                                    {{ donation.created_at|to_jalali }}
                                 </small>
                             </li>
                         {% endfor %}
