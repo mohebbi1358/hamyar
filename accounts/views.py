@@ -133,10 +133,6 @@ def login_view(request):
             else:
                 return render(request, 'accounts/login.html', {'error': 'شماره یا رمز اشتباه است'})
 
-        
-        
-        
-        
         elif action == 'send_code':
             now = timezone.now()
             if phone in SMS_CODE_STORAGE:
@@ -161,7 +157,6 @@ def login_view(request):
 
             result_code = 0
             if result:
-                # اگر XML است، عدد را از وسط تگ <string> بیرون بکش
                 match = re.search(r'>(\d+)<', result)
                 if match:
                     result_code = int(match.group(1))
@@ -170,11 +165,11 @@ def login_view(request):
                 error_msg = MELI_PAYAMAK_ERRORS.get(result_code, 'خطا در ارسال پیامک. لطفاً بعداً تلاش کنید.')
                 return render(request, 'accounts/login.html', {'error': error_msg})
 
-            # اگر ارسال موفق بود:
             from django.urls import reverse
             return redirect(f"{reverse('accounts:verify')}?phone={phone}")
 
-
+    # ✅ برای درخواست GET:
+    return render(request, 'accounts/login.html')
 
 
 
