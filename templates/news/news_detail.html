@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load jalali_filters %}
+
 {% block content %}
 <div class="container my-5">
 
@@ -10,7 +11,13 @@
   <div class="row mb-4">
     <div class="col-lg-8 mx-auto">
       <h1 class="mb-3 text-center">{{ news.title }}</h1>
-      <img src="{{ news.main_image.url }}" alt="" class="img-fluid rounded mb-4">
+
+      {% if news.main_image %}
+        <a href="{{ news.main_image.url }}" class="glightbox" data-gallery="main-gallery">
+          <img src="{{ news.main_image.url }}" class="main-image img-fluid rounded shadow-sm mb-4" alt="">
+        </a>
+      {% endif %}
+
       <p class="lead">{{ news.summary }}</p>
       <div class="mt-4">
         {{ news.body|safe }}
@@ -20,12 +27,15 @@
 
   {% if news.images.all %}
     <div class="row mb-5">
-      <h3 class="mb-3">تصاویر دیگر</h3>
+      <h3 class="mb-4">تصاویر دیگر</h3>
       {% for img in news.images.all %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3">
-          <img src="{{ img.image.url }}" alt="" class="img-fluid rounded">
+        <div class="col-6 col-md-4 col-lg-3 mb-4">
+          <a href="{{ img.image.url }}" class="glightbox" data-gallery="news-gallery">
+            <img src="{{ img.image.url }}" class="gallery-thumb img-fluid shadow-sm" alt="">
+          </a>
         </div>
       {% endfor %}
+
     </div>
   {% endif %}
 
@@ -58,10 +68,54 @@
           <button type="submit" class="btn btn-primary">ارسال نظر</button>
         </form>
       {% else %}
-        <p class="mt-4 alert alert-warning text-center">برای ارسال نظر ابتدا وارد حساب کاربری شوید.</p>
+        <p class="mt-4 alert alert-warning text-center">
+          برای ارسال نظر ابتدا وارد حساب کاربری شوید.
+        </p>
       {% endif %}
     </div>
   </div>
 
 </div>
 {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+<style>
+  .gallery-thumb {
+    height: 120px;  //اندازه سایر عکس
+    width: auto;
+    object-fit: cover;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .gallery-thumb:hover {
+    transform: scale(1.05);
+  }
+  .main-image {
+    max-height: 250px;
+    object-fit: cover;
+    width: 10%;
+    border-radius: 10px;
+  }
+</style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    GLightbox({
+      selector: '.glightbox',
+      touchNavigation: true,
+      loop: true,
+      zoomable: true,
+      closeButton: true,
+      nextButton: true,
+      prevButton: true,
+    });
+  });
+</script>
+{% endblock %}
+

@@ -168,6 +168,13 @@
     </style>
     <!-- Persian Datepicker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+    <!-- Cropper.js CSS -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>  -->
+
+
+{% block extra_css %}{% endblock %}
+
+
 
 </head>
 <body>
@@ -310,6 +317,12 @@
 
 
 {% block scripts %}{% endblock %}
+<!-- Cropper.js JS -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script> -->
+
+{% block extra_js %}
+{% endblock %}
+
 </body>
 </html>
 

@@ -10,12 +10,18 @@ from .models import Eternals
 import jdatetime
 import datetime
 
+
+
+import jdatetime
+
 class EternalsForm(forms.ModelForm):
-    death_date = forms.DateField(
-        label="تاریخ فوت",
-        widget=forms.DateInput(attrs={'type': 'date'}),
+    death_date = forms.CharField(
         required=False,
-        initial=datetime.date.today  # به میلادی ذخیره می‌شه ولی می‌تونی در قالب شمسی نشون بدی
+        widget=forms.TextInput(attrs={
+            'id': 'death_date_picker',
+            'autocomplete': 'off',
+            'placeholder': 'تاریخ فوت',
+        })
     )
 
     class Meta:
@@ -25,8 +31,28 @@ class EternalsForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound:
+            if self.instance and self.instance.death_date:
+                try:
+                    self.fields['death_date'].initial = jdatetime.date.fromgregorian(date=self.instance.death_date).strftime('%Y/%m/%d')
+                except:
+                    pass
+
+    def clean_death_date(self):
+        date_str = self.cleaned_data.get('death_date')
+        if date_str:
+            try:
+                y, m, d = map(int, date_str.replace('-', '/').split('/'))
+                return jdatetime.date(y, m, d).togregorian()
+            except:
+                raise forms.ValidationError("تاریخ فوت نامعتبر است.")
+        return None
+    
 
 
+    
 from django import forms
 from .models import Ceremony
 

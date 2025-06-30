@@ -1,24 +1,286 @@
 {% extends "base.html" %}
-{% load jalali_filters %}
+{% load static %}
 {% block title %}ثبت یا ویرایش جاودانه{% endblock %}
 {% block content %}
 
-<h1>{% if form.instance.pk %}ویرایش{% else %}ثبت{% endif %} جاودانه</h1>
+<link href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet" />
 
-{% if form.instance.pk %}
-<div style="border:1px solid #ddd;padding:10px;margin-bottom:20px;background:#f9f9f9">
-  <p><strong>{{ form.instance.first_name }} {{ form.instance.last_name }}</strong></p>
-  {% if form.instance.known_as %}<p>{{ form.instance.known_as }}</p>{% endif %}
-  {% if form.instance.description %}<p>{{ form.instance.description }}</p>{% endif %}
-  {% if form.instance.father_name %}<p>فرزند {{ form.instance.father_name }}</p>{% endif %}
+<style>
+
+
+
+    .live-preview-container {
+    background: #fffbe6;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 30px;
+    border: 1px solid #ffecb3;
+    font-family: "Vazir", sans-serif;
+  }
+  .live-preview-container h5 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #f57c00;
+  }
+  .preview-line {
+    font-size: 16px;
+    color: #444;
+    margin-bottom: 8px;
+  }
+
+  .form-container {
+    max-width: 700px;
+    margin: 30px auto;
+    background: #f9f9f9;
+    padding: 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    font-family: "Vazir", sans-serif;
+  }
+  .form-group { margin-bottom: 18px; }
+  label { font-weight: 600; margin-bottom: 6px; display: block; }
+  input.form-control, textarea.form-control {
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    padding: 9px 12px;
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .btn-submit {
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    padding: 12px 0;
+    border-radius: 7px;
+    font-size: 17px;
+    width: 100%;
+    cursor: pointer;
+  }
+  .btn-submit:hover { background-color: #45a049; }
+  #image-preview {
+    max-width: 220px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    display: none;
+  }
+  /* Modal cropper styles */
+  #cropper-modal {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #cropper-modal .modal-content {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    text-align: center;
+  }
+  #cropper-modal img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .modal-buttons button {
+    cursor: pointer;
+    padding: 8px 14px;
+    margin: 0 6px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+  }
+  .modal-buttons button:hover { opacity: 0.9; }
+  .btn-rotate-left { background: #2196f3; color: white; }
+  .btn-rotate-right { background: #2196f3; color: white; }
+  .btn-confirm { background: #4caf50; color: white; }
+  .btn-cancel { background: #f44336; color: white; }
+</style>
+
+<div class="form-container">
+  <h3 style="text-align:center; margin-bottom:25px;">
+    {% if form.instance.pk %}ویرایش جاودانه{% else %}ثبت جاودانه جدید{% endif %}
+  </h3>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}
+          <div style="color:#d32f2f; font-size:13px; margin-top:4px;">
+            {{ error }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <img id="image-preview" alt="پیش نمایش تصویر">
+    <div class="live-preview-container">
+      <h5>پیش‌نمایش اطلاعات وارد شده</h5>
+      <div class="preview-line" id="preview-fullname"></div>
+      <div class="preview-line" id="preview-knownas"></div>
+      <div class="preview-line" id="preview-description"></div>
+      <div class="preview-line" id="preview-deathdate"></div>
+    </div>
+
+    <button type="submit" class="btn-submit">ذخیره</button>
+  </form>
 </div>
-{% endif %}
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="btn btn-primary">ذخیره</button>
-</form>
-<a href="{% url 'eternals:list' %}">بازگشت</a>
+<!-- Modal Cropper -->
+<div id="cropper-modal">
+  <div class="modal-content">
+    <img id="cropper-image" src="" alt="تصویر برای برش">
+    <div class="modal-buttons" style="margin-top: 10px;">
+      <button type="button" class="btn-rotate-left">↺ چرخش ۹۰-</button>
+      <button type="button" class="btn-rotate-right">↻ چرخش ۹۰+</button>
+      <button type="button" class="btn-confirm">تایید برش</button>
+      <button type="button" class="btn-cancel">لغو</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
+<script>
+
+
+$(document).ready(function () {
+  function updatePreview() {
+    let firstName = $('input[name="first_name"]').val();
+    let lastName = $('input[name="last_name"]').val();
+    let knownAs = $('input[name="known_as"]').val();
+    let description = $('textarea[name="description"]').val();
+    let deathDate = $('#death_date_picker').val();
+
+    // خط اول: نام و نام خانوادگی
+    let fullname = (firstName || '') + ' ' + (lastName || '');
+    $('#preview-fullname').text(fullname.trim());
+
+    // خط دوم: معروف به
+    $('#preview-knownas').text(knownAs);
+
+    // خط سوم: توضیحات
+    $('#preview-description').text(description);
+
+    // خط چهارم: تاریخ فوت
+    $('#preview-deathdate').text(deathDate);
+  }
+
+  $('input, textarea').on('keyup change', updatePreview);
+
+  // اجرای اولیه اگر داده‌ها وجود داشته باشد
+  updatePreview();
+});
+
+
+$(function() {
+  // Initialize Persian Datepicker on death_date input (needs class jalali-date)
+  $(".jalali-date").each(function() {
+    if (!$(this).val()) {
+      $(this).persianDatepicker({
+        format: 'YYYY/MM/DD',
+        initialValue: true,
+        initialValueType: 'today',
+        autoClose: true
+      });
+    }
+  });
+
+  let cropper;
+  const modal = $('#cropper-modal');
+  const cropperImage = document.getElementById('cropper-image');
+  const inputImage = $('input[name="image"]')[0];
+  const preview = $('#image-preview');
+
+  function openCropperModal(url) {
+    cropperImage.src = url;
+    modal.css('display', 'flex');
+    cropper = new Cropper(cropperImage, {
+      aspectRatio: 1,
+      viewMode: 1,
+      autoCropArea: 1,
+      responsive: true,
+    });
+  }
+
+  function closeCropperModal() {
+    modal.css('display', 'none');
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+  }
+
+  inputImage.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      openCropperModal(url);
+      preview.hide();
+    }
+  });
+
+  $('.btn-rotate-left').on('click', function() {
+    if (cropper) cropper.rotate(-90);
+  });
+
+  $('.btn-rotate-right').on('click', function() {
+    if (cropper) cropper.rotate(90);
+  });
+
+  $('.btn-cancel').on('click', function() {
+    closeCropperModal();
+    inputImage.value = ""; // reset input if canceled
+  });
+
+  $('.btn-confirm').on('click', function() {
+    if (!cropper) return;
+    cropper.getCroppedCanvas({ width: 500, height: 500 }).toBlob(function(blob) {
+      // Replace file in input with cropped image file
+      const fileName = 'cropped_image.jpg';
+      const file = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      inputImage.files = dataTransfer.files;
+
+      // Show preview
+      preview.attr('src', URL.createObjectURL(blob)).show();
+
+      closeCropperModal();
+    }, 'image/jpeg', 0.9);
+  });
+
+  // Show preview if existing image exists (edit form)
+  {% if form.instance.image %}
+    preview.attr('src', "{{ form.instance.image.url }}").show();
+  {% endif %}
+});
+
+
+$(document).ready(function () {
+  $("#death_date_picker").persianDatepicker({
+    format: "YYYY/MM/DD",
+    initialValue: false,
+    autoClose: true
+  });
+});
+
+
+</script>
 
 {% endblock %}

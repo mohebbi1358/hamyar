@@ -1,7 +1,16 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}ارسال خبر{% endblock %}
 
 {% block content %}
+
+<!-- CSS Cropper.js -->
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
+
+<!-- JS Cropper.js -->
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
 <style>
     .form-container {
         max-width: 700px;
@@ -17,7 +26,7 @@
         margin-bottom: 30px;
     }
 
-    .form-container form p {
+    .form-container form div.field {
         margin-bottom: 15px;
     }
 
@@ -29,13 +38,17 @@
 
     .form-container input[type="text"],
     .form-container textarea,
-    .form-container input[type="file"],
     .form-container select {
         width: 100%;
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 8px;
         margin-top: 4px;
+    }
+
+    .form-container input[type="file"] {
+        display: block;
+        margin-top: 8px;
     }
 
     #formset-container {
@@ -74,6 +87,47 @@
     #add-image:hover {
         background-color: #1976D2;
     }
+
+    #main-image-preview {
+        width: 200px; /* اندازه نمایش پیش‌نمایش تصویر اصلی */
+        height: auto;
+        margin-top: 10px;
+        border-radius: 8px;
+        display: none; 
+    }
+
+    /* Modal Styles */
+    #cropper-modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    #cropper-modal .modal-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+        text-align: center;
+    }
+
+    #cropper-modal img {
+        max-width: 100%;
+        max-height: 500px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+
+    #cropper-modal .btn {
+        margin: 5px;
+    }
 </style>
 
 <div class="form-container">
@@ -81,13 +135,42 @@
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        <div class="field">
+            <label for="{{ form.category.id_for_label }}">دسته‌بندی</label>
+            {{ form.category }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.title.id_for_label }}">عنوان خبر</label>
+            {{ form.title }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.summary.id_for_label }}">خلاصه خبر</label>
+            {{ form.summary }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.body.id_for_label }}">متن خبر</label>
+            {{ form.body }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.main_image.id_for_label }}">عکس اصلی خبر</label>
+            {{ form.main_image }}
+
+            <!-- پیش نمایش زیر input -->
+            <img id="main-image-preview" alt="پیش نمایش عکس اصلی"/>
+        </div>
 
         <h3 style="margin-top: 30px;">📸 عکس‌های بیشتر:</h3>
         <div id="formset-container">
             {{ formset.management_form }}
-            {% for form in formset %}
-                <div class="image-form">{{ form.image.label }} {{ form.image }}</div>
+            {% for f in formset %}
+                <div class="image-form">
+                    {{ f.image.label }} {{ f.image }}
+                </div>
             {% endfor %}
         </div>
 
@@ -97,20 +180,213 @@
     </form>
 </div>
 
+<!-- Modal Cropper -->
+<div id="cropper-modal">
+    <div class="modal-content">
+        <img id="cropper-modal-image" src="">
+        <div>
+            <button type="button" id="rotate-left" class="btn">↺ چرخش ۹۰-</button>
+            <button type="button" id="rotate-right" class="btn">↻ چرخش ۹۰+</button>
+            <button type="button" id="crop-confirm" class="btn">✅ تایید برش</button>
+            <button type="button" id="crop-cancel" class="btn" style="background-color:#f44336;">✖ لغو</button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    let cropper = null;
+    let currentInput = null;
+    let previewElement = null;
+
+    const modal = document.getElementById('cropper-modal');
+    const modalImage = document.getElementById('cropper-modal-image');
+    const rotateLeftBtn = document.getElementById('rotate-left');
+    const rotateRightBtn = document.getElementById('rotate-right');
+    const cropConfirmBtn = document.getElementById('crop-confirm');
+    const cropCancelBtn = document.getElementById('crop-cancel');
+
+    function openModal(url) {
+        modalImage.src = url;
+        modal.style.display = 'flex';
+
+        if (cropper) {
+            cropper.destroy();
+        }
+
+        let aspectRatio;
+
+        if (currentInput.name === 'main_image') {
+            aspectRatio = 1; // مربعی
+        } else {
+            aspectRatio = NaN; // آزاد
+        }
+
+        cropper = new Cropper(modalImage, {
+            aspectRatio: aspectRatio,
+            viewMode: 1,
+            autoCropArea: 1,
+            responsive: true,
+        });
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    rotateLeftBtn.addEventListener('click', () => {
+        if (cropper) cropper.rotate(-90);
+    });
+
+    rotateRightBtn.addEventListener('click', () => {
+        if (cropper) cropper.rotate(90);
+    });
+
+    cropCancelBtn.addEventListener('click', () => {
+        closeModal();
+    });
+
+    cropConfirmBtn.addEventListener('click', () => {
+        if (cropper && currentInput) {
+            let cropOptions = {};
+            let outputFormat = 'image/jpeg';
+            let outputQuality = 0.8; 
+
+            if (currentInput.name === 'main_image') {
+                cropOptions.width = 500;
+                cropOptions.height = 500;
+                outputFormat = 'image/jpeg';
+                outputQuality = 0.8; // **کیفیت تصویر اصلی اینجاست**
+            } else {
+                cropOptions.width = 700;
+                cropOptions.height = 700;
+                outputFormat = 'image/png';
+                outputQuality = 0.9; // **کیفیت تصویر سایر اینجاست**
+            }
+
+            cropper.getCroppedCanvas(cropOptions).toBlob(function (blob) {
+                const dt = new DataTransfer();
+                const croppedFile = new File(
+                    [blob],
+                    'cropped_image.' + (outputFormat === 'image/png' ? 'png' : 'jpg'),
+                    { type: outputFormat }
+                );
+                dt.items.add(croppedFile);
+                currentInput.files = dt.files;
+
+                if (previewElement) {
+                    previewElement.src = URL.createObjectURL(blob);
+                    previewElement.style.display = 'block';
+                    previewElement.style.width = '40px';   // اندازه بندانگشتی پیش‌نمایش سایر عکس‌ها در فرم
+                    previewElement.style.height = 'auto';
+                    previewElement.style.objectFit = 'cover';
+                    previewElement.style.border = '1px solid #ccc';
+                    previewElement.style.borderRadius = '4px';
+                    previewElement.style.marginTop = '10px';
+                }
+
+                closeModal();
+            }, outputFormat, outputQuality);
+        }
+    });
+
+    function attachCropper(input) {
+        input.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                currentInput = input;
+
+                // پیدا کردن preview اختصاصی
+                let preview;
+                if (input.name === 'main_image') {
+                    preview = document.getElementById('main-image-preview');
+                } else {
+                    preview = input.closest('.image-form')?.querySelector('.image-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.classList.add('image-preview');
+                        preview.style.maxWidth = '40px';   // اندازه بندانگشتی پیش‌نمایش سایر عکس‌ها در فرم
+                        preview.style.marginTop = '10px';
+                        preview.style.borderRadius = '10px';
+                        preview.style.display = 'none';
+                        input.parentNode.appendChild(preview);
+                    }
+                }
+
+                previewElement = preview;
+                openModal(url);
+            }
+        });
+    }
+
+    // اول فرم اصلی (main_image) را وصل کن
+    const mainImageInput = document.querySelector('input[name="main_image"]');
+    if (mainImageInput) {
+        attachCropper(mainImageInput);
+    }
+
+    // inputهای داخل formset را وصل کن
+    const formsetImageInputs = document.querySelectorAll('#formset-container input[type="file"]');
+    formsetImageInputs.forEach(input => {
+        attachCropper(input);
+    });
+
+    // هندل اضافه کردن فرم جدید
     const addBtn = document.getElementById('add-image');
     const container = document.getElementById('formset-container');
     const totalForms = document.getElementById('id_images-TOTAL_FORMS');
 
-    addBtn.addEventListener('click', function () {
-        const currentFormCount = parseInt(totalForms.value);
-        const newForm = container.querySelector('.image-form').cloneNode(true);
-        const regex = new RegExp(`images-(\\d+)-`, 'g');
-        newForm.innerHTML = newForm.innerHTML.replace(regex, `images-${currentFormCount}-`);
-        container.appendChild(newForm);
-        totalForms.value = currentFormCount + 1;
-    });
+    if (addBtn) {
+        addBtn.addEventListener('click', function () {
+            const currentFormCount = parseInt(totalForms.value);
+            const oldForm = container.querySelector('.image-form');
+            const newForm = oldForm.cloneNode(true);
+
+            // تغییر name و id داخل فرم جدید
+            newForm.querySelectorAll('*').forEach(function (el) {
+                if (el.name) {
+                    el.name = el.name.replace(/images-(\d+)-/, `images-${currentFormCount}-`);
+                }
+                if (el.id) {
+                    el.id = el.id.replace(/images-(\d+)-/, `images-${currentFormCount}-`);
+                }
+            });
+
+            // پاک کردن value ها
+            const fileInput = newForm.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            // preview را پاک کن یا بساز
+            let preview = newForm.querySelector('.image-preview');
+            if (preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+            } else {
+                preview = document.createElement('img');
+                preview.classList.add('image-preview');
+                preview.style.maxWidth = '100px';
+                preview.style.marginTop = '10px';
+                preview.style.borderRadius = '10px';
+                preview.style.display = 'none';
+                newForm.appendChild(preview);
+            }
+
+            container.appendChild(newForm);
+            totalForms.value = currentFormCount + 1;
+
+            attachCropper(fileInput);
+        });
+    }
 });
 </script>
+
+
 {% endblock %}
