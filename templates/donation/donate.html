@@ -148,10 +148,11 @@
     </div>
 
     <label for="cause">بابت:</label>
-    <select name="cause" id="cause">
-      <option value="POOR">فقرا</option>
-      <option value="SCHOOL">مدرسه‌سازی</option>
-      <option value="HEALTH">درمان بیماران</option>
+    <select name="cause" class="form-control" required>
+      <option value="">لطفاً انتخاب کنید</option>
+      {% for cause in causes %}
+        <option value="{{ cause.id }}">{{ cause.title }}</option>
+      {% endfor %}
     </select>
 
     <div class="pay-buttons">

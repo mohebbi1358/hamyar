@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>لیست دلایل پرداخت</h1>
+<a href="{% url 'donation:donationcause_create' %}">افزودن دلیل جدید</a>
+<table>
+    <thead>
+        <tr>
+            <th>عنوان</th>
+            <th>فعال</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cause in causes %}
+        <tr>
+            <td>{{ cause.title }}</td>
+            <td>{{ cause.is_active }}</td>
+            <td>
+                <a href="{% url 'donation:donationcause_edit' cause.pk %}">ویرایش</a>
+                |
+                <a href="{% url 'donation:donationcause_delete' cause.pk %}">حذف</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">دلیلی وجود ندارد.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

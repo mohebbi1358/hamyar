@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% if form.instance.pk %}ویرایش دلیل پرداخت{% else %}افزودن دلیل پرداخت{% endif %}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">ذخیره</button>
+</form>
+<a href="{% url 'donation:donationcause_list' %}">بازگشت به لیست</a>
+{% endblock %}

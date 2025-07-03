@@ -2,6 +2,8 @@
 from django.db import models
 from django.conf import settings
 from donation.models import Donation
+from donation.models import DonationCause
+
 
 class Wallet(models.Model):
     user = models.OneToOneField(
@@ -38,12 +40,12 @@ class WalletTransaction(models.Model):
         choices=TRANSACTION_TYPES,
         default='CHARGE'
     )
-    cause = models.CharField(
-        max_length=20,
-        choices=Donation.CAUSES,
+    cause = models.ForeignKey(
+        DonationCause,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="بابت صدقه"
+        related_name='wallet_transactions'
     )
     status = models.CharField(
         max_length=10,

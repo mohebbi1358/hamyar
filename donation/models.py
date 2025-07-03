@@ -15,17 +15,61 @@ from eternals.models import Eternals
 from accounts.models import User
 
 
+
+# donation/models.py
+
+from django.db import models
+from django.utils.text import slugify
+
+class DonationCause(models.Model):
+    code = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        verbose_name="کد (انگلیسی یا لاتین)"
+    )
+    title = models.CharField(
+        max_length=100,
+        verbose_name="عنوان (فارسی)"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="فعال است؟"
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            base_code = slugify(self.title, allow_unicode=True)
+            code = base_code or "cause"
+            counter = 1
+            while DonationCause.objects.filter(code=code).exclude(pk=self.pk).exists():
+                code = f"{base_code}-{counter}"
+                counter += 1
+            self.code = code
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "علت صدقه"
+        verbose_name_plural = "علل صدقه"
+
+
+
+
+
 class Donation(models.Model):
-    CAUSES = [
-        ('POOR', 'فقرا'),
-        ('SCHOOL', 'مدرسه‌سازی'),
-        ('HEALTH', 'درمان بیماران'),
-    ]
-
-
-
     amount = models.PositiveIntegerField(verbose_name="مبلغ (تومان)")
-    cause = models.CharField(max_length=20, choices=CAUSES, verbose_name="بابت")
+    cause = models.ForeignKey(
+        DonationCause,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="بابت",
+        related_name="donations"
+    )
     status = models.CharField(
         max_length=10,
         choices=[
@@ -87,7 +131,9 @@ class Donation(models.Model):
 
 
     def __str__(self):
-        title = f"{self.amount} تومان - {self.get_cause_display()} - {self.status}"
+        cause_title = self.cause.title if self.cause else "-"
+        title = f"{self.amount} تومان - {cause_title} - {self.status}"
+
         if self.user:
             title += f" - توسط: {self.user.get_full_name() or self.user.username}"
         if self.martyr:

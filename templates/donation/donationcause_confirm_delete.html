@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>حذف دلیل پرداخت</h1>
+<p>آیا مطمئن هستید که می‌خواهید دلیل "{{ cause.title }}" را حذف کنید؟</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">بله، حذف کن</button>
+    <a href="{% url 'donation:donationcause_list' %}">انصراف</a>
+</form>
+{% endblock %}

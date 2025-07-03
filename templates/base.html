@@ -249,6 +249,9 @@
                             {% if user.is_staff %}
                                 <li><a href="{% url 'accounts:user_list' %}">مدیریت کاربران</a></li>
                                 <li><a href="{% url 'news:manage_categories' %}">دسته‌بندی‌ها</a></li>
+                                <li><a href="{% url 'donation:donationcause_list' %}">مدیریت دلایل پرداخت</a></li>
+                                <li><a href="{% url 'donation:donation_wallet_report' %}">گزارش صدقات و کیف پول</a></li>
+
                             {% endif %}
 
                             <li><a href="{% url 'accounts:logout' %}">خروج</a></li>

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>گزارش صدقات و تراکنش‌های کیف پول</h1>
+
+<form method="get" style="direction: rtl;">
+    <label>از تاریخ:</label>
+    <input type="date" name="start_date" value="{{ request.GET.start_date }}">
+
+    <label>تا تاریخ:</label>
+    <input type="date" name="end_date" value="{{ request.GET.end_date }}">
+
+    <label>وضعیت صدقه:</label>
+    <select name="donation_status">
+        <option value="">همه</option>
+        <option value="SUCCESS" {% if request.GET.donation_status == "SUCCESS" %}selected{% endif %}>موفق</option>
+        <option value="FAILED" {% if request.GET.donation_status == "FAILED" %}selected{% endif %}>ناموفق</option>
+        <option value="PENDING" {% if request.GET.donation_status == "PENDING" %}selected{% endif %}>در انتظار</option>
+    </select>
+
+    <label>وضعیت تراکنش کیف پول:</label>
+    <select name="transaction_status">
+        <option value="">همه</option>
+        <option value="SUCCESS" {% if request.GET.transaction_status == "SUCCESS" %}selected{% endif %}>موفق</option>
+        <option value="FAILED" {% if request.GET.transaction_status == "FAILED" %}selected{% endif %}>ناموفق</option>
+        <option value="PENDING" {% if request.GET.transaction_status == "PENDING" %}selected{% endif %}>در انتظار</option>
+    </select>
+
+    <label>علت:</label>
+    <select name="cause">
+        <option value="">همه</option>
+        {% for cause in causes %}
+            <option value="{{ cause.id }}" {% if request.GET.cause == cause.id|stringformat:"s" %}selected{% endif %}>
+                {{ cause.title }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label>کاربر:</label>
+    <select name="user">
+        <option value="">همه</option>
+        {% for user in users %}
+            <option value="{{ user.id }}" {% if request.GET.user == user.id|stringformat:"s" %}selected{% endif %}>
+                {% if user.get_full_name %}
+                    {{ user.get_full_name }}
+                {% elif user.username %}
+                    {{ user.username }}
+                {% else %}
+                    {{ "-" }}
+                {% endif %}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">فیلتر</button>
+    <button type="submit" name="export" value="excel">دانلود Excel</button>
+</form>
+
+<h3>لیست صدقات</h3>
+<table border="1">
+    <tr>
+        <th>مبلغ</th>
+        <th>وضعیت</th>
+        <th>علت</th>
+        <th>کاربر</th>
+        <th>شهید</th>
+        <th>جاودانه</th>
+        <th>تاریخ</th>
+    </tr>
+    {% for d in donations %}
+    <tr>
+        <td>{{ d.amount }}</td>
+        <td>{{ d.get_status_display }}</td>
+        <td>{% if d.cause %}{{ d.cause.title }}{% else %}-{% endif %}</td>
+        <td>
+            {% if d.user %}
+                {% if d.user.get_full_name %}
+                    {{ d.user.get_full_name }}
+                {% elif d.user.username %}
+                    {{ d.user.username }}
+                {% else %}
+                    -
+                {% endif %}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        <td>{% if d.martyr %}{{ d.martyr }}{% else %}-{% endif %}</td>
+        <td>{% if d.eternal %}{{ d.eternal }}{% else %}-{% endif %}</td>
+        <td>{{ d.created_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7">موردی یافت نشد.</td></tr>
+    {% endfor %}
+</table>
+
+<h2>لیست تراکنش‌های کیف پول</h2>
+<table border="1">
+    <thead>
+        <tr>
+            <th>کاربر</th>
+            <th>نوع تراکنش</th>
+            <th>مبلغ</th>
+            <th>وضعیت</th>
+            <th>علت</th>
+            <th>تاریخ</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tx in wallet_transactions %}
+        <tr>
+            <td>
+                {% if tx.wallet.user %}
+                    {% if tx.wallet.user.get_full_name %}
+                        {{ tx.wallet.user.get_full_name }}
+                    {% elif tx.wallet.user.username %}
+                        {{ tx.wallet.user.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>{{ tx.get_transaction_type_display }}</td>
+            <td>{{ tx.amount }}</td>
+            <td>{{ tx.get_status_display }}</td>
+            <td>{% if tx.cause %}{{ tx.cause.title }}{% else %}-{% endif %}</td>
+            <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">موردی یافت نشد.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

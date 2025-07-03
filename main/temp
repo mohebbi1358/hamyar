@@ -5,11 +5,10 @@ from django.contrib import messages
 from martyrs.models import Martyr
 from eternals.models import Eternals
 from wallet.models import Wallet, WalletTransaction
-from .utils import process_wallet_donation
 from donation.models import Donation
 import random
-
-
+from donation.models import DonationCause
+from .views import process_wallet_donation
 
 
 
@@ -269,116 +268,35 @@ def donationcause_delete(request, pk):
 
 
 
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
-from django.db.models import Q
-from donation.models import Donation
-from wallet.models import WalletTransaction
 
+این هم ویوی
+def process_wallet_donation(user, amount, cause_obj, martyr=None, eternal=None):
+    wallet = Wallet.objects.filter(user=user).first()
+    if not wallet:
+        return False, "کیف پول شما فعال نیست."
+    if wallet.balance < amount:
+        return False, "موجودی کیف پول کافی نیست."
 
+    wallet.balance -= amount
+    wallet.save()
 
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.shortcuts import render
-from django.utils import timezone
-from wallet.models import WalletTransaction
-from donation.models import Donation, DonationCause
-from accounts.models import User
-
-@login_required
-@user_passes_test(lambda u: u.is_superuser)
-def donation_wallet_report(request):
-    donations = Donation.objects.all()
-    wallet_transactions = WalletTransaction.objects.all()
-    
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
-    donation_status = request.GET.get("donation_status")
-    transaction_status = request.GET.get("transaction_status")
-    cause_id = request.GET.get("cause")
-    user_id = request.GET.get("user")
-
-    # فیلتر تاریخ
-    if start_date:
-        donations = donations.filter(created_at__date__gte=start_date)
-        wallet_transactions = wallet_transactions.filter(created_at__date__gte=start_date)
-    if end_date:
-        donations = donations.filter(created_at__date__lte=end_date)
-        wallet_transactions = wallet_transactions.filter(created_at__date__lte=end_date)
-
-    # فیلتر وضعیت
-    if donation_status:
-        donations = donations.filter(status=donation_status)
-    if transaction_status:
-        wallet_transactions = wallet_transactions.filter(status=transaction_status)
-    
-    # فیلتر علت
-    if cause_id:
-        donations = donations.filter(cause_id=cause_id)
-        wallet_transactions = wallet_transactions.filter(cause_id=cause_id)
-    
-    # فیلتر کاربر
-    if user_id:
-        donations = donations.filter(user_id=user_id)
-        wallet_transactions = wallet_transactions.filter(wallet__user_id=user_id)
-
-    causes = DonationCause.objects.all()
-    users = User.objects.all()
-
-    # Excel export
-    if request.GET.get("export") == "excel":
-        return export_to_excel(donations, wallet_transactions)
-
-    return render(request, 'donation/report.html', {
-        'donations': donations,
-        'wallet_transactions': wallet_transactions,
-        'causes': causes,
-        'users': users,
-    })
-
-
-import openpyxl
-from openpyxl.utils import get_column_letter
-from django.http import HttpResponse
-from django.utils import timezone
-
-def export_to_excel(donations, wallet_transactions):
-    wb = openpyxl.Workbook()
-    ws1 = wb.active
-    ws1.title = "صدقات"
-
-    headers1 = ["مبلغ", "وضعیت", "علت", "کاربر", "شهید", "جاودانه", "تاریخ"]
-    ws1.append(headers1)
-
-    for d in donations:
-        ws1.append([
-            d.amount,
-            d.get_status_display(),
-            str(d.cause or ""),
-            str(d.user or ""),
-            str(d.martyr or ""),
-            str(d.eternal or ""),
-            timezone.localtime(d.created_at).strftime("%Y-%m-%d %H:%M")
-        ])
-
-    # Sheet 2: Wallet Transactions
-    ws2 = wb.create_sheet(title="تراکنش‌های کیف پول")
-    headers2 = ["کاربر", "نوع تراکنش", "مبلغ", "وضعیت", "علت", "تاریخ"]
-    ws2.append(headers2)
-
-    for tx in wallet_transactions:
-        ws2.append([
-            str(tx.wallet.user or ""),
-            tx.get_transaction_type_display(),
-            tx.amount,
-            tx.get_status_display(),
-            str(tx.cause or ""),
-            timezone.localtime(tx.created_at).strftime("%Y-%m-%d %H:%M")
-        ])
-
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        amount=amount,
+        transaction_type='DONATION',
+        status='SUCCESS',
+        cause=cause_obj
     )
-    filename = f"donation_wallet_report_{timezone.now().strftime('%Y%m%d_%H%M')}.xlsx"
-    response['Content-Disposition'] = f'attachment; filename={filename}'
-    wb.save(response)
-    return response
+
+    Donation.objects.create(
+        amount=amount,
+        cause=cause_obj,
+        status='SUCCESS',
+        user=user,
+        martyr=martyr,
+        eternal=eternal
+    )
+
+    return True, None
+
+

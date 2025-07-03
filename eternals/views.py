@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.db.models import Case, When, IntegerField
-
+from django.http import Http404
 from .models import Eternals, CondolenceMessage, Ceremony
 from .forms import EternalsForm, CeremonyForm, CondolenceMessageForm
 from accounts.models import Persona
