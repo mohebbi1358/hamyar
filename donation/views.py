@@ -87,14 +87,14 @@ def donate_for_eternal(request, eternal_id):
             amount = int(amount_str)
             if amount < 1000:
                 messages.error(request, "حداقل مبلغ ۱۰۰۰ تومان است.")
-                return redirect('donate_for_eternal', eternal_id=eternal_id)
+                return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
         except ValueError:
             messages.error(request, "مبلغ وارد شده معتبر نیست.")
-            return redirect('donate_for_eternal', eternal_id=eternal_id)
+            return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
 
         if not cause_id:
             messages.error(request, "لطفاً دلیل صدقه را انتخاب کنید.")
-            return redirect('donate_for_eternal', eternal_id=eternal_id)
+            return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
 
         cause_obj = get_object_or_404(DonationCause, id=cause_id)
         # تغییر فقط متن دلیل (برای تراکنش)
@@ -105,7 +105,7 @@ def donate_for_eternal(request, eternal_id):
                 request.user, amount, cause_obj, martyr=None, eternal=eternal)
             if not success:
                 messages.error(request, error_msg)
-                return redirect('donate_for_eternal', eternal_id=eternal_id)
+                return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
 
             messages.success(request, "پرداخت از طریق کیف پول با موفقیت انجام شد.")
             return redirect('eternals:detail', pk=eternal_id)
@@ -122,7 +122,7 @@ def donate_for_eternal(request, eternal_id):
 
         else:
             messages.error(request, "روش پرداخت نامعتبر است.")
-            return redirect('donate_for_eternal', eternal_id=eternal_id)
+            return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
 
     suggested_amounts = [10000, 25000, 40000, 60000, 100000]
     return render(request, 'donation/donate.html', {
