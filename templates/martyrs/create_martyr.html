@@ -3,6 +3,9 @@
 {% block title %}ثبت شهید جدید{% endblock %}
 
 {% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" rel="stylesheet" />
+
 <style>
   .martyr-form-container {
     max-width: 900px;
@@ -13,31 +16,20 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     font-family: "Vazir", sans-serif;
   }
-
-  .martyr-form-container h5 {
-    margin-bottom: 25px;
-    text-align: center;
-    font-size: 22px;
-    color: #333;
-  }
-
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px 40px;
   }
-
   .form-group {
     display: flex;
     flex-direction: column;
   }
-
   .form-label {
     font-weight: bold;
     margin-bottom: 5px;
     color: #444;
   }
-
   .form-control {
     border-radius: 8px;
     padding: 10px;
@@ -45,19 +37,6 @@
     border: 1px solid #ccc;
     box-sizing: border-box;
   }
-
-  .form-text {
-    font-size: 13px;
-    color: #777;
-    margin-top: 4px;
-  }
-
-  .text-danger {
-    margin-top: 5px;
-    font-size: 13px;
-    color: #d32f2f;
-  }
-
   .submit-btn {
     width: 100%;
     padding: 12px;
@@ -69,23 +48,61 @@
     transition: background-color 0.3s ease;
     margin-top: 30px;
   }
-
   .submit-btn:hover {
     background-color: #43a047;
   }
-
-  @media (max-width: 768px) {
-    .form-grid {
-      grid-template-columns: 1fr;
-    }
+  #image-preview {
+    max-width: 220px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    display: none;
   }
+  /* Cropper Modal */
+  #cropper-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #cropper-modal .modal-content {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    text-align: center;
+  }
+  #cropper-modal img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .modal-buttons button {
+    cursor: pointer;
+    padding: 8px 14px;
+    margin: 0 6px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+  }
+  .modal-buttons button:hover { opacity: 0.9; }
+  .btn-rotate-left { background: #2196f3; color: white; }
+  .btn-rotate-right { background: #2196f3; color: white; }
+  .btn-confirm { background: #4caf50; color: white; }
+  .btn-cancel { background: #f44336; color: white; }
 </style>
 
 <div class="martyr-form-container">
   <h5><i class="bi bi-person-plus-fill me-1"></i> فرم ثبت اطلاعات شهید</h5>
   <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
-
     <div class="form-grid">
       {% for field in form %}
         <div class="form-group">
@@ -100,28 +117,116 @@
         </div>
       {% endfor %}
     </div>
-
+    <img id="image-preview" alt="پیش نمایش تصویر">
     <button type="submit" class="submit-btn">
       <i class="bi bi-check-circle-fill me-1"></i> ثبت اطلاعات
     </button>
   </form>
 </div>
+
+<!-- Cropper Modal -->
+<div id="cropper-modal">
+  <div class="modal-content">
+    <img id="cropper-image" src="" alt="تصویر برای برش">
+    <div class="modal-buttons" style="margin-top: 10px;">
+      <button type="button" class="btn-rotate-left">↺ چرخش ۹۰-</button>
+      <button type="button" class="btn-rotate-right">↻ چرخش ۹۰+</button>
+      <button type="button" class="btn-confirm">تایید برش</button>
+      <button type="button" class="btn-cancel">لغو</button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <script>
-  $(document).ready(function () {
+$(function () {
     $("#birth_date_picker").persianDatepicker({
-      format: "YYYY/MM/DD",
-      initialValue: false,
-      autoClose: true
+        format: 'YYYY/MM/DD',
+    });
+    $("#martyr_date_picker").persianDatepicker({
+        format: 'YYYY/MM/DD',
     });
 
-    $("#martyr_date_picker").persianDatepicker({
-      format: "YYYY/MM/DD",
-      initialValue: false,
-      autoClose: true
+    let cropper;
+    const modal = $("#cropper-modal");
+    const cropperImage = document.getElementById("cropper-image");
+    const inputImage = document.getElementById("id_photo");
+    const preview = $("#image-preview");
+
+    function openCropperModal(url) {
+        cropperImage.src = url;
+        modal.css("display", "flex");
+        cropper = new Cropper(cropperImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+            responsive: true,
+        });
+    }
+
+    function closeCropperModal() {
+        modal.css("display", "none");
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    if (inputImage) {
+        inputImage.addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                openCropperModal(url);
+                preview.hide();
+            }
+        });
+    }
+
+    $(".btn-rotate-left").on("click", function () {
+        if (cropper) cropper.rotate(-90);
     });
-  });
+
+    $(".btn-rotate-right").on("click", function () {
+        if (cropper) cropper.rotate(90);
+    });
+
+    $(".btn-cancel").on("click", function () {
+        closeCropperModal();
+        if (inputImage) inputImage.value = "";
+    });
+
+    $(".btn-confirm").on("click", function () {
+        if (!cropper) return;
+        cropper.getCroppedCanvas({
+            width: 500,
+            height: 500,
+        }).toBlob(function (blob) {
+            const fileName = "cropped_photo.jpg";
+            const file = new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            inputImage.files = dataTransfer.files;
+
+            // Show preview
+            preview.attr("src", URL.createObjectURL(blob)).show();
+
+            closeCropperModal();
+        }, "image/jpeg", 0.9);
+    });
+
+    {% if form.instance.photo %}
+        $("#image-preview")
+            .attr("src", "{{ form.instance.photo.url }}")
+            .show();
+    {% endif %}
+});
 </script>
 {% endblock %}

@@ -9,6 +9,7 @@
         <tr>
             <th>نام</th>
             <th>نامک (slug)</th>
+            <th>سقف ارسال روزانه</th>
             <th>عملیات</th>
         </tr>
     </thead>
@@ -18,20 +19,31 @@
                 <td>{{ category.name }}</td>
                 <td>{{ category.slug }}</td>
                 <td>
+                    {% if category.daily_limit %}
+                        {{ category.daily_limit }}
+                    {% else %}
+                        بدون محدودیت
+                    {% endif %}
+                </td>
+                <td>
                     <a href="{% url 'news:edit_category' category.id %}">✏️ ویرایش</a> |
                     <a href="{% url 'news:delete_category' category.id %}" onclick="return confirm('آیا از حذف این دسته‌بندی مطمئن هستید؟')">🗑️ حذف</a>
                 </td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="3">هیچ دسته‌بندی‌ای ثبت نشده است.</td>
+                <td colspan="4">هیچ دسته‌بندی‌ای ثبت نشده است.</td>
             </tr>
         {% endfor %}
     </tbody>
+
 </table>
 
 <hr>
 <h3>افزودن دسته‌بندی جدید</h3>
+
+
+
 
 <form method="post">
     {% csrf_token %}
@@ -53,6 +65,19 @@
         {% endif %}
     </div>
 
+    <div style="margin-bottom: 12px;">
+        <label for="{{ form.daily_limit.id_for_label }}">سقف ارسال روزانه:</label><br>
+        {{ form.daily_limit }}
+        <small style="color: gray;">اگر صفر باشد محدودیتی ندارد.</small>
+        {% if form.daily_limit.errors %}
+            <div style="color:red;">{{ form.daily_limit.errors }}</div>
+        {% endif %}
+    </div>
+
     <button type="submit">➕ افزودن دسته‌بندی</button>
 </form>
+
+
+
+
 {% endblock %}

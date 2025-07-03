@@ -2,13 +2,101 @@
 {% block title %}ویرایش دسته‌بندی{% endblock %}
 
 {% block content %}
+<style>
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+    }
+    .form-group small {
+        color: #777;
+        display: block;
+        margin-top: 4px;
+    }
+    .error-message {
+        color: red;
+        margin-top: 4px;
+        font-size: 13px;
+    }
+    .btn {
+        display: inline-block;
+        background: #007bff;
+        color: #fff;
+        text-decoration: none;
+        padding: 10px 18px;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: background 0.3s;
+    }
+    .btn:hover {
+        background: #0056b3;
+    }
+    .btn-secondary {
+        background: #6c757d;
+    }
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+    @media(max-width: 600px) {
+        .btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
 <div style="max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-    <h2>✏️ ویرایش دسته‌بندی</h2>
+    <h2 style="margin-bottom:24px;">✏️ ویرایش دسته‌بندی</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        <div class="form-group">
+            <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.help_text %}
+                <small>{{ form.name.help_text }}</small>
+            {% endif %}
+            {% for error in form.name.errors %}
+                <div class="error-message">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.slug.id_for_label }}">{{ form.slug.label }}</label>
+            {{ form.slug }}
+            <small>مثلاً: <code>politics</code> یا <code>اخبار-ورزشی</code> (فقط حروف کوچک، عدد، خط تیره)</small>
+            {% for error in form.slug.errors %}
+                <div class="error-message">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.daily_limit.id_for_label }}">{{ form.daily_limit.label }}</label>
+            {{ form.daily_limit }}
+            {% if form.daily_limit.help_text %}
+                <small>{{ form.daily_limit.help_text }}</small>
+            {% endif %}
+            {% for error in form.daily_limit.errors %}
+                <div class="error-message">{{ error }}</div>
+            {% endfor %}
+        </div>
+
         <button type="submit" class="btn">💾 ذخیره</button>
-        <a href="{% url 'news:manage_categories' %}" class="btn" style="background:#888;">بازگشت</a>
+        <a href="{% url 'news:manage_categories' %}" class="btn btn-secondary">بازگشت</a>
     </form>
 </div>
 {% endblock %}

@@ -5,6 +5,25 @@
 
 {% block content %}
 
+{% if messages %}
+  <div style="max-width: 600px; margin: 0 auto 20px;">
+    {% for message in messages %}
+      <div style="
+          background-color: {% if message.tags == 'error' %}#ffebee{% elif message.tags == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %};
+          color: {% if message.tags == 'error' %}#c62828{% elif message.tags == 'success' %}#2e7d32{% else %}#1565c0{% endif %};
+          border-radius: 8px;
+          padding: 12px 18px;
+          margin-bottom: 10px;
+          border: 1px solid {% if message.tags == 'error' %}#ef9a9a{% elif message.tags == 'success' %}#a5d6a7{% else %}#90caf9{% endif %};
+          font-family: Vazir, sans-serif;
+          font-size: 15px;
+        ">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <!-- CSS Cropper.js -->
 <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
 
@@ -12,6 +31,7 @@
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 
 <style>
+    /* بقیه استایل‌ها بدون تغییر */
     .form-container {
         max-width: 700px;
         margin: 40px auto;
@@ -89,7 +109,7 @@
     }
 
     #main-image-preview {
-        width: 200px; /* اندازه نمایش پیش‌نمایش تصویر اصلی */
+        width: 200px;
         height: auto;
         margin-top: 10px;
         border-radius: 8px;
@@ -128,6 +148,16 @@
     #cropper-modal .btn {
         margin: 5px;
     }
+
+    /* پیام خطا دسته‌بندی */
+    #category-error {
+        color: #c62828;
+        font-weight: bold;
+        margin-top: 8px;
+        display: none;
+        font-family: Vazir, sans-serif;
+        font-size: 14px;
+    }
 </style>
 
 <div class="form-container">
@@ -139,6 +169,13 @@
         <div class="field">
             <label for="{{ form.category.id_for_label }}">دسته‌بندی</label>
             {{ form.category }}
+
+            <!-- اینجا پیام خطا AJAX نمایش داده میشه -->
+            <div id="category-error"></div>
+
+            {% for error in form.category.errors %}
+                <div class="error" style="color:red;">{{ error }}</div>
+            {% endfor %}
         </div>
 
         <div class="field">
@@ -159,8 +196,6 @@
         <div class="field">
             <label for="{{ form.main_image.id_for_label }}">عکس اصلی خبر</label>
             {{ form.main_image }}
-
-            <!-- پیش نمایش زیر input -->
             <img id="main-image-preview" alt="پیش نمایش عکس اصلی"/>
         </div>
 
@@ -196,6 +231,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ========= Cropper بخش =========
+
     let cropper = null;
     let currentInput = null;
     let previewElement = null;
@@ -215,13 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
             cropper.destroy();
         }
 
-        let aspectRatio;
-
-        if (currentInput.name === 'main_image') {
-            aspectRatio = 1; // مربعی
-        } else {
-            aspectRatio = NaN; // آزاد
-        }
+        let aspectRatio = currentInput.name === 'main_image' ? 1 : NaN;
 
         cropper = new Cropper(modalImage, {
             aspectRatio: aspectRatio,
@@ -255,18 +286,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (cropper && currentInput) {
             let cropOptions = {};
             let outputFormat = 'image/jpeg';
-            let outputQuality = 0.8; 
+            let outputQuality = 0.8;
 
             if (currentInput.name === 'main_image') {
                 cropOptions.width = 500;
                 cropOptions.height = 500;
                 outputFormat = 'image/jpeg';
-                outputQuality = 0.8; // **کیفیت تصویر اصلی اینجاست**
+                outputQuality = 0.8;
             } else {
                 cropOptions.width = 700;
                 cropOptions.height = 700;
                 outputFormat = 'image/png';
-                outputQuality = 0.9; // **کیفیت تصویر سایر اینجاست**
+                outputQuality = 0.9;
             }
 
             cropper.getCroppedCanvas(cropOptions).toBlob(function (blob) {
@@ -282,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (previewElement) {
                     previewElement.src = URL.createObjectURL(blob);
                     previewElement.style.display = 'block';
-                    previewElement.style.width = '40px';   // اندازه بندانگشتی پیش‌نمایش سایر عکس‌ها در فرم
+                    previewElement.style.width = '40px';
                     previewElement.style.height = 'auto';
                     previewElement.style.objectFit = 'cover';
                     previewElement.style.border = '1px solid #ccc';
@@ -302,7 +333,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const url = URL.createObjectURL(file);
                 currentInput = input;
 
-                // پیدا کردن preview اختصاصی
                 let preview;
                 if (input.name === 'main_image') {
                     preview = document.getElementById('main-image-preview');
@@ -311,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!preview) {
                         preview = document.createElement('img');
                         preview.classList.add('image-preview');
-                        preview.style.maxWidth = '40px';   // اندازه بندانگشتی پیش‌نمایش سایر عکس‌ها در فرم
+                        preview.style.maxWidth = '40px';
                         preview.style.marginTop = '10px';
                         preview.style.borderRadius = '10px';
                         preview.style.display = 'none';
@@ -325,19 +355,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // اول فرم اصلی (main_image) را وصل کن
     const mainImageInput = document.querySelector('input[name="main_image"]');
     if (mainImageInput) {
         attachCropper(mainImageInput);
     }
 
-    // inputهای داخل formset را وصل کن
     const formsetImageInputs = document.querySelectorAll('#formset-container input[type="file"]');
     formsetImageInputs.forEach(input => {
         attachCropper(input);
     });
 
-    // هندل اضافه کردن فرم جدید
     const addBtn = document.getElementById('add-image');
     const container = document.getElementById('formset-container');
     const totalForms = document.getElementById('id_images-TOTAL_FORMS');
@@ -348,7 +375,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const oldForm = container.querySelector('.image-form');
             const newForm = oldForm.cloneNode(true);
 
-            // تغییر name و id داخل فرم جدید
             newForm.querySelectorAll('*').forEach(function (el) {
                 if (el.name) {
                     el.name = el.name.replace(/images-(\d+)-/, `images-${currentFormCount}-`);
@@ -358,13 +384,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // پاک کردن value ها
             const fileInput = newForm.querySelector('input[type="file"]');
             if (fileInput) {
                 fileInput.value = '';
             }
 
-            // preview را پاک کن یا بساز
             let preview = newForm.querySelector('.image-preview');
             if (preview) {
                 preview.src = '';
@@ -385,8 +409,47 @@ document.addEventListener('DOMContentLoaded', function () {
             attachCropper(fileInput);
         });
     }
+
+    // ========= AJAX چک محدودیت دسته‌بندی =========
+
+    const categorySelect = document.getElementById('id_category');
+    const errorDiv = document.getElementById('category-error');
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function () {
+            const categoryId = this.value;
+
+            if (!categoryId) {
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+                return;
+            }
+
+            fetch(`/news/check-daily-limit/?category_id=${categoryId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.ok) {
+                    errorDiv.textContent = data.message || 'امکان ارسال خبر در این دسته‌بندی وجود ندارد.';
+                    errorDiv.style.display = 'block';
+                    categorySelect.value = '';
+                } else {
+                    errorDiv.style.display = 'none';
+                    errorDiv.textContent = '';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                errorDiv.textContent = 'خطا در بررسی محدودیت دسته‌بندی.';
+                errorDiv.style.display = 'block';
+            });
+        });
+    }
+
 });
 </script>
-
 
 {% endblock %}

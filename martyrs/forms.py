@@ -13,6 +13,9 @@ import jdatetime
 from django import forms
 from .models import Martyr
 
+
+
+
 class MartyrForm(forms.ModelForm):
     birth_date = forms.CharField(
         required=False,
@@ -33,7 +36,8 @@ class MartyrForm(forms.ModelForm):
 
     class Meta:
         model = Martyr
-        exclude = ['birth_date', 'martyr_date']  # ❗️اینجا اصلاح شد
+        # ❗️ نباید photo رو exclude کنی
+        exclude = ['birth_date', 'martyr_date']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,6 +52,10 @@ class MartyrForm(forms.ModelForm):
                     self.fields['martyr_date'].initial = jdatetime.date.fromgregorian(date=self.instance.martyr_date).strftime('%Y/%m/%d')
                 except:
                     pass
+        if 'photo' in self.fields:
+            self.fields['photo'].widget.attrs.update({
+                'id': 'id_photo'
+            })
 
     def clean_birth_date(self):
         date_str = self.cleaned_data.get('birth_date')
@@ -68,6 +76,7 @@ class MartyrForm(forms.ModelForm):
             except:
                 raise forms.ValidationError("تاریخ شهادت نامعتبر است.")
         return None
+
 
 
 

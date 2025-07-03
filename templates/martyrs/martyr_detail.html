@@ -1,11 +1,61 @@
-
 {% extends "base.html" %}
 {% load jalali_filters %}
-
+{% load static %}
 
 {% block title %}جزئیات شهید{% endblock %}
 
 {% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet" />
+
+<style>
+  #image-preview {
+    max-width: 220px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    display: none;
+  }
+  /* Modal cropper styles */
+  #cropper-modal {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #cropper-modal .modal-content {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    text-align: center;
+  }
+  #cropper-modal img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .modal-buttons button {
+    cursor: pointer;
+    padding: 8px 14px;
+    margin: 0 6px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+  }
+  .modal-buttons button:hover { opacity: 0.9; }
+  .btn-rotate-left { background: #2196f3; color: white; }
+  .btn-rotate-right { background: #2196f3; color: white; }
+  .btn-confirm { background: #4caf50; color: white; }
+  .btn-cancel { background: #f44336; color: white; }
+</style>
+
 {% if user.is_authenticated and user.is_superuser %}
   <div class="text-center mb-4">
     <a href="{% url 'martyrs:martyr_edit' martyr.id %}" class="btn btn-warning">
@@ -47,15 +97,28 @@
 
       <label for="id_persona">شخصیت:</label>
       {{ form.persona }}
+      {% for error in form.persona.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
 
       <label for="id_text">متن دل‌نوشته:</label>
       {{ form.text }}
+      {% for error in form.text.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
 
       <label for="id_image">تصویر:</label>
       {{ form.image }}
+      {% for error in form.image.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+      <img id="image-preview" alt="پیش‌نمایش">
 
       <label for="id_audio">فایل صوتی:</label>
       {{ form.audio }}
+      {% for error in form.audio.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
 
       <button type="submit" style="padding: 8px 16px; background-color: #0055aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
         ارسال
@@ -75,17 +138,6 @@
     {% for memory in memories %}
       <div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9;">
         
- <!--       <p style="margin-bottom: 10px;">
-          <strong>کاربر:</strong>
-          {% if memory.user.first_name or memory.user.last_name %}
-            {{ memory.user.first_name }} {{ memory.user.last_name }}
-          {% else %}
-            -
-          {% endif %}
-
-        </p>
-        -->
-
         <p style="margin-bottom: 10px;">
           <strong>شخصیت:</strong> {{ memory.persona.name }}
         </p>
@@ -117,4 +169,97 @@
   {% endif %}
 
 </div>
+
+<!-- Modal Cropper -->
+<div id="cropper-modal">
+  <div class="modal-content">
+    <img id="cropper-image" src="" alt="تصویر برای برش">
+    <div class="modal-buttons" style="margin-top: 10px;">
+      <button type="button" class="btn-rotate-left">↺ چرخش ۹۰-</button>
+      <button type="button" class="btn-rotate-right">↻ چرخش ۹۰+</button>
+      <button type="button" class="btn-confirm">تایید برش</button>
+      <button type="button" class="btn-cancel">لغو</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
+<script>
+$(function() {
+  let cropper;
+  const modal = $('#cropper-modal');
+  const cropperImage = document.getElementById('cropper-image');
+  const inputImage = $('input[name="image"]')[0];
+  const preview = $('#image-preview');
+
+  function openCropperModal(url) {
+    cropperImage.src = url;
+    modal.css('display', 'flex');
+    cropper = new Cropper(cropperImage, {
+      aspectRatio: NaN,
+      viewMode: 1,
+      autoCropArea: 1,
+      responsive: true,
+    });
+  }
+
+  function closeCropperModal() {
+    modal.css('display', 'none');
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+  }
+
+  inputImage.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      openCropperModal(url);
+      preview.hide();
+    }
+  });
+
+  $('.btn-rotate-left').on('click', function() {
+    if (cropper) cropper.rotate(-90);
+  });
+
+  $('.btn-rotate-right').on('click', function() {
+    if (cropper) cropper.rotate(90);
+  });
+
+  $('.btn-cancel').on('click', function() {
+    closeCropperModal();
+    inputImage.value = "";
+  });
+
+  $('.btn-confirm').on('click', function() {
+    if (!cropper) return;
+    cropper.getCroppedCanvas({
+      maxWidth: 800,
+      maxHeight: 800,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'medium'
+    }).toBlob(function(blob) {
+      const fileName = 'cropped_image.jpg';
+      const file = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      inputImage.files = dataTransfer.files;
+
+      preview.attr('src', URL.createObjectURL(blob)).show();
+      closeCropperModal();
+    }, 'image/jpeg', 0.7);  // کیفیت مناسب و حجم کم
+
+  });
+
+  // اگر فرم edit بود (تصویر موجود بود)
+  {% if form.instance.image %}
+    preview.attr('src', "{{ form.instance.image.url }}").show();
+  {% endif %}
+});
+</script>
+
 {% endblock %}

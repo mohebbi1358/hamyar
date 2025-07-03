@@ -6,7 +6,7 @@ class PhoneForm(forms.Form):
     phone = forms.CharField(label='شماره موبایل', max_length=11)
 
 class CodeVerifyForm(forms.Form):
-    code = forms.CharField(label='کد تایید', max_length=6)
+    code = forms.CharField(label='کد تایید', max_length=4)
 
 class PasswordLoginForm(forms.Form):
     phone = forms.CharField(label='شماره موبایل', max_length=11)

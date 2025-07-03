@@ -67,12 +67,34 @@ def news_detail(request, news_id):
 
 
 
+
+
+from django.utils import timezone
+from django.contrib import messages
+
 @login_required
 def create_news(request):
     if request.method == 'POST':
         form = NewsForm(request.POST, request.FILES, user=request.user)
         formset = NewsImageFormSet(request.POST, request.FILES)
+
         if form.is_valid() and formset.is_valid():
+            category = form.cleaned_data['category']
+            daily_limit = category.daily_limit
+
+            if daily_limit > 0:
+                today = timezone.now().date()
+                news_count_today = News.objects.filter(
+                    author=request.user,
+                    category=category,
+                    created_at__date=today
+                ).count()
+
+                if news_count_today >= daily_limit:
+                    messages.error(request, f'شما به سقف مجاز ارسال روزانه ({daily_limit} خبر) در دسته‌بندی "{category.name}" رسیده‌اید.')
+                    return redirect('news:create_news')  # یا بازگشت به همان فرم
+
+            # ادامه روند ذخیره:
             news = form.save(commit=False)
             news.author = request.user
             news.save()
@@ -82,10 +104,13 @@ def create_news(request):
     else:
         form = NewsForm(user=request.user)
         formset = NewsImageFormSet()
+
     return render(request, 'news/create_news.html', {
         'form': form,
         'formset': formset
     })
+
+
 
 
 
@@ -167,5 +192,73 @@ def edit_category(request, category_id):
         'form': form,
         'category': category
     })
+
+
+
+
+
+
+
+from django.http import JsonResponse
+from news.models import Category
+
+
+
+
+from django.http import JsonResponse
+from django.utils.timezone import now
+from datetime import timedelta
+
+def check_daily_limit(request):
+    category_id = request.GET.get("category_id")
+
+    if not category_id:
+        return JsonResponse({
+            "ok": False,
+            "message": "هیچ شناسه‌ای ارسال نشده."
+        })
+
+    try:
+        category_id = int(category_id)
+    except ValueError:
+        return JsonResponse({
+            "ok": False,
+            "message": "شناسه دسته‌بندی معتبر نیست."
+        })
+
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return JsonResponse({
+            "ok": False,
+            "message": "دسته‌بندی پیدا نشد."
+        })
+
+    # اگر سقف روزانه صفر بود یعنی محدودیتی ندارد
+    if category.daily_limit == 0:
+        return JsonResponse({
+            "ok": True,
+            "message": f"دسته‌بندی {category.name} پیدا شد و محدودیتی برای ارسال خبر ندارد."
+        })
+
+    today = now().date()
+    count_today = News.objects.filter(
+        category=category,
+        created_at__date=today
+    ).count()
+
+    if count_today >= category.daily_limit:
+        return JsonResponse({
+            "ok": False,
+            "message": f"سقف مجاز ارسال خبر در دسته‌بندی '{category.name}' برای امروز پر شده است."
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "message": f"دسته‌بندی {category.name} پیدا شد و می‌توانید خبر ارسال کنید."
+    })
+
+
+
 
 

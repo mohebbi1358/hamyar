@@ -248,6 +248,7 @@
 
                             {% if user.is_staff %}
                                 <li><a href="{% url 'accounts:user_list' %}">مدیریت کاربران</a></li>
+                                <li><a href="{% url 'news:manage_categories' %}">دسته‌بندی‌ها</a></li>
                             {% endif %}
 
                             <li><a href="{% url 'accounts:logout' %}">خروج</a></li>

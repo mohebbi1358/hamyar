@@ -1,3 +1,9 @@
+from django.db import models
+from django.core.exceptions import ValidationError
+from martyrs.models import Martyr
+from eternals.models import Eternals
+from accounts.models import User
+
 # donation/models.py
 
 from django.db import models
@@ -15,6 +21,8 @@ class Donation(models.Model):
         ('SCHOOL', 'مدرسه‌سازی'),
         ('HEALTH', 'درمان بیماران'),
     ]
+
+
 
     amount = models.PositiveIntegerField(verbose_name="مبلغ (تومان)")
     cause = models.CharField(max_length=20, choices=CAUSES, verbose_name="بابت")
@@ -93,3 +101,5 @@ class Donation(models.Model):
         verbose_name = "صدقه"
         verbose_name_plural = "صدقات"
         ordering = ['-created_at']
+
+

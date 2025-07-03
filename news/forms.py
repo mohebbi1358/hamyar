@@ -11,6 +11,9 @@ class NewsForm(forms.ModelForm):
     class Meta:
         model = News
         fields = ['title', 'category', 'summary', 'body', 'main_image']
+        widgets = {
+            'category': forms.Select(attrs={'id': 'id_category'}),
+        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # گرفتن کاربر از ویو
@@ -36,14 +39,24 @@ from .models import Category
 
 
 
+
+# news/forms.py
+
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'slug']  # slug اضافه شده
+        fields = ['name', 'slug', 'daily_limit']
         labels = {
             'name': 'نام دسته‌بندی',
             'slug': 'نامک (slug)',
+            'daily_limit': 'سقف ارسال روزانه',
         }
+        help_texts = {
+            'daily_limit': 'اگر صفر باشد محدودیتی ندارد.',
+        }
+
+
+
 
 
 
