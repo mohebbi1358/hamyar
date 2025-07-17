@@ -8,6 +8,7 @@ from .views import login_view, verify_view, CompleteProfileView,logout_view
 app_name = 'accounts'
 
 urlpatterns = [
+    path('api/search/', views.user_search, name='user_search'),
 
     #path('complete-profile/', CompleteProfileView.as_view()),
     path('login/', login_view, name='login'),

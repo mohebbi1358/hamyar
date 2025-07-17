@@ -21,6 +21,11 @@ from accounts.models import User
 from django.db import models
 from django.utils.text import slugify
 
+
+
+from django.utils.text import slugify
+from django.db import models
+
 class DonationCause(models.Model):
     code = models.CharField(
         max_length=50,
@@ -35,6 +40,11 @@ class DonationCause(models.Model):
     is_active = models.BooleanField(
         default=True,
         verbose_name="فعال است؟"
+    )
+    
+    is_system = models.BooleanField(
+        default=False,
+        verbose_name="سیستمی (برای استفاده داخلی سایت)"
     )
 
     def save(self, *args, **kwargs):
@@ -60,16 +70,55 @@ class DonationCause(models.Model):
 
 
 
+
+
+
+
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+
+from donation.models import DonationCause
+
+User = get_user_model()
+
+
+
+
+
+
+
+
+
+
+from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.db import models
+
+User = get_user_model()
+
+
+
+
+
+from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.db import models
+
+User = get_user_model()
+
 class Donation(models.Model):
     amount = models.PositiveIntegerField(verbose_name="مبلغ (تومان)")
+
     cause = models.ForeignKey(
-        DonationCause,
+        'donation.DonationCause',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name="بابت",
         related_name="donations"
     )
+
     status = models.CharField(
         max_length=10,
         choices=[
@@ -80,6 +129,7 @@ class Donation(models.Model):
         default='PENDING',
         verbose_name="وضعیت پرداخت"
     )
+
     ref_id = models.CharField(max_length=100, null=True, blank=True, verbose_name="کد رهگیری بانک")
     tracking_code = models.CharField(max_length=100, null=True, blank=True, verbose_name="کد داخلی/رسید")
     gateway_response = models.TextField(null=True, blank=True, verbose_name="پاسخ بانک")
@@ -94,7 +144,7 @@ class Donation(models.Model):
     )
 
     eternal = models.ForeignKey(
-    Eternals,
+        'eternals.Eternals',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -103,13 +153,14 @@ class Donation(models.Model):
     )
 
     martyr = models.ForeignKey(
-        Martyr,
+        'martyrs.Martyr',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name="شهید مرتبط",
         related_name="donations"
     )
+
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -118,22 +169,32 @@ class Donation(models.Model):
         verbose_name="کاربر پرداخت‌کننده",
         related_name="donations"
     )
+    PAY_METHOD_CHOICES = [
+        ('wallet', 'Wallet'),
+        ('gateway', 'Gateway'),
+    ]
 
-    
+    pay_method = models.CharField(
+        max_length=20,
+        choices=PAY_METHOD_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="روش پرداخت"
+    )
+
+    extra_data = models.JSONField(null=True, blank=True, verbose_name="داده‌های اضافی")
+    redirect_url = models.CharField(max_length=500, null=True, blank=True)
+
+
     def clean(self):
-        # اگر هر دو خالی باشند → خطا
         if not self.martyr and not self.eternal:
             raise ValidationError("صدقه باید از طرف یک شهید یا یک جاودانه باشد.")
-        
-        # اگر هر دو پر باشند → خطا
         if self.martyr and self.eternal:
             raise ValidationError("صدقه نمی‌تواند همزمان هم از طرف شهید و هم از طرف جاودانه باشد.")
-
 
     def __str__(self):
         cause_title = self.cause.title if self.cause else "-"
         title = f"{self.amount} تومان - {cause_title} - {self.status}"
-
         if self.user:
             title += f" - توسط: {self.user.get_full_name() or self.user.username}"
         if self.martyr:
@@ -142,10 +203,18 @@ class Donation(models.Model):
             title += f" - جاودانه: {self.eternal}"
         return title
 
-
     class Meta:
         verbose_name = "صدقه"
         verbose_name_plural = "صدقات"
         ordering = ['-created_at']
+
+
+
+
+
+
+
+
+
 
 

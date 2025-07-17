@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+  <h1>لیست کوپن‌های شما</h1>
+
+  {% if coupons %}
+    <div>
+      <strong>جمع کل کوپن‌های خریداری شده: </strong>{{ total_purchased }}<br>
+      <strong>جمع کل کوپن‌های استفاده شده: </strong>{{ total_used }}
+      <strong>جمع کل کوپن‌های رزروشده: </strong>{{ total_reserved }}<br>
+    </div>
+
+    <table class="table table-striped mt-3">
+      <thead>
+        <tr>
+          <th>گروه ارسال پیام</th>
+          <th>تعداد خریداری شده</th>
+          <th>تعداد استفاده شده</th>
+          <th>تعداد رزروشده</th>
+          <th>باقی‌مانده</th>
+          <th>تاریخ ایجاد</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for coupon in coupons %}
+          <tr>
+            <td>{{ coupon.group.title }}</td>
+            <td>{{ coupon.quantity_purchased }}</td>
+            <td>{{ coupon.quantity_used }}</td>
+            <td>{{ coupon.quantity_reserved }}</td>
+            <td>{{ coupon.remaining }}</td>
+            <td>{{ coupon.created_at|date:"Y/m/d H:i" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2 class="mt-5">ریز خریدهای شما</h2>
+    {% if purchases %}
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>گروه</th>
+            <th>تعداد</th>
+            <th>روش پرداخت</th>
+            <th>مبلغ</th>
+            <th>تاریخ خرید</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for purchase in purchases %}
+            <tr>
+              <td>{{ purchase.group.title }}</td>
+              <td>{{ purchase.quantity }}</td>
+              <td>{{ purchase.get_payment_method_display }}</td>
+              <td>{{ purchase.amount|intcomma }}</td>
+              <td>{{ purchase.created_at|date:"Y/m/d H:i" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>شما هنوز هیچ خریدی ثبت نکرده‌اید.</p>
+    {% endif %}
+  {% else %}
+    <p>شما هنوز هیچ کوپنی خریداری نکرده‌اید.</p>
+  {% endif %}
+
+  <a href="{% url 'notification:buy_coupon' %}" class="btn btn-primary mt-3">خرید کوپن جدید</a>
+{% endblock %}

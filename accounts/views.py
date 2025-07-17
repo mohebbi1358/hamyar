@@ -387,3 +387,34 @@ def delete_persona(request, persona_id):
 
 
 
+
+
+
+
+
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
+User = get_user_model()
+
+def user_search(request):
+    q = request.GET.get('q', '').strip()
+    results = []
+    if q:
+        users = User.objects.filter(
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q) |
+            Q(phone__icontains=q) |
+            Q(national_code__icontains=q)
+        )[:20]
+        for user in users:
+            results.append({
+                'id': user.id,
+                'display_name': user.get_display_name() or user.phone,
+                'phone': user.phone,
+            })
+    return JsonResponse(results, safe=False)
+
+
+

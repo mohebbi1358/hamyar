@@ -8,6 +8,7 @@
         <tr>
             <th>عنوان</th>
             <th>فعال</th>
+            <th>سیستمی</th>
             <th>عملیات</th>
         </tr>
     </thead>
@@ -16,6 +17,7 @@
         <tr>
             <td>{{ cause.title }}</td>
             <td>{{ cause.is_active }}</td>
+            <td>{{ cause.is_system }}</td>
             <td>
                 <a href="{% url 'donation:donationcause_edit' cause.pk %}">ویرایش</a>
                 |

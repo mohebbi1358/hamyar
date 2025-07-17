@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{% if is_new %}ایجاد گروه جدید{% else %}ویرایش گروه{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    form#group-form {
+      width: 66%;
+      margin: 0 auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input[type="text"], select, textarea, input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button.submit-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">{% if is_new %}ایجاد گروه جدید{% else %}ویرایش گروه{% endif %}</h1>
+
+<form method="post" id="group-form" autocomplete="off">
+    {% csrf_token %}
+
+    <div class="form-group">
+        {{ form.title.label_tag }}
+        {{ form.title }}
+    </div>
+
+    <div class="form-check">
+        {{ form.is_mandatory }} {{ form.is_mandatory.label_tag }}
+    </div>
+
+    <div class="form-check">
+        {{ form.hidden }} {{ form.hidden.label_tag }}
+    </div>
+
+    <div class="form-check">
+        {{ form.needs_approval }} {{ form.needs_approval.label_tag }}
+    </div>
+
+    <div class="form-check">
+        {{ form.is_public }} {{ form.is_public.label_tag }}
+    </div>
+
+    <div class="form-group">
+        {{ form.send_cost.label_tag }}
+        {{ form.send_cost }}
+    </div>
+
+    <div class="form-group">
+        {{ form.default_expire_days.label_tag }}
+        {{ form.default_expire_days }}
+    </div>
+
+    <div class="form-group">
+        {{ form.allowed_senders.label_tag }}
+        {{ form.allowed_senders }}
+    </div>
+
+    <div class="form-group">
+        {{ form.managers.label_tag }}
+        {{ form.managers }}
+    </div>
+
+    <div class="form-group">
+        {{ form.members.label_tag }}
+        {{ form.members }}
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3 submit-btn">ذخیره</button>
+    <a href="{% url 'notification:notification_group_list' %}" class="btn btn-secondary mt-3">بازگشت</a>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('.user-select').select2({
+          width: '100%',
+          dir: "rtl",
+          placeholder: "نام کاربر را جستجو کنید...",
+          minimumInputLength: 2,
+          ajax: {
+              url: "/accounts/api/search/",
+              dataType: 'json',
+              delay: 250,
+              data: function (params) {
+                  return { q: params.term };
+              },
+              processResults: function (data) {
+                  return {
+                      results: data.map(function(user) {
+                          return {
+                              id: user.id,
+                              text: user.display_name || user.phone
+                          };
+                      })
+                  };
+              },
+              cache: true
+          },
+          language: {
+              noResults: function() {
+                  return "یافت نشد";
+              },
+              searching: function() {
+                  return "در حال جستجو...";
+              }
+          }
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>پیام های دریافتی</h1>
+
+<ul>
+    {% for notif in notifications %}
+        <li>
+            <a href="{% url 'notification:notification_detail' notif.id %}">{{ notif.title }}</a>
+            <small>{{ notif.created_at }}</small>
+        </li>
+    {% empty %}
+        <li>پیامی یافت نشد.</li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'notification:create_notification' %}">ارسال پیام جدید</a> |
+<a href="{% url 'notification:buy_coupon' %}">خرید کوپن</a>
+{% endblock %}

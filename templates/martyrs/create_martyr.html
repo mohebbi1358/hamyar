@@ -147,11 +147,12 @@
 
 <script>
 $(function () {
-    $("#birth_date_picker").persianDatepicker({
+    $("#birth_date_picker, #martyr_date_picker").persianDatepicker({
         format: 'YYYY/MM/DD',
-    });
-    $("#martyr_date_picker").persianDatepicker({
-        format: 'YYYY/MM/DD',
+        initialValue: false,
+        initialValueType: 'gregorian',
+        autoClose: true,
+        calendarType: 'persian'
     });
 
     let cropper;
@@ -167,7 +168,7 @@ $(function () {
             aspectRatio: 1,
             viewMode: 1,
             autoCropArea: 1,
-            responsive: true,
+            responsive: true
         });
     }
 
@@ -207,7 +208,7 @@ $(function () {
         if (!cropper) return;
         cropper.getCroppedCanvas({
             width: 500,
-            height: 500,
+            height: 500
         }).toBlob(function (blob) {
             const fileName = "cropped_photo.jpg";
             const file = new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() });
@@ -221,12 +222,6 @@ $(function () {
             closeCropperModal();
         }, "image/jpeg", 0.9);
     });
-
-    {% if form.instance.photo %}
-        $("#image-preview")
-            .attr("src", "{{ form.instance.photo.url }}")
-            .show();
-    {% endif %}
 });
 </script>
 {% endblock %}

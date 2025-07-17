@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load jalali_filters %}
+{% load static %}
+
+{% block title %}پیام‌های خوانده شده{% endblock %}
+
+{% block content %}
+<style>
+    .notifications-container {
+        width: 66%;
+        max-width: 900px;
+        height: 500px;
+        margin: 30px auto;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .notification-card {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .notification-card:hover {
+        transform: scale(1.02);
+        cursor: pointer;
+    }
+
+    .notification-title {
+        font-weight: bold;
+        font-size: 18px;
+        color: #333333;
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+
+    .notification-date {
+        font-size: 14px;
+        color: #2e0bf5;
+        margin-right: 10px;
+    }
+
+    .notification-description {
+        font-size: 16px;
+        color: #555555;
+        line-height: 1.5;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin: 20px auto 0;
+        background-color: #007bff;
+        color: #ffffff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .btn-back:hover {
+        background-color: #0056b3;
+    }
+
+</style>
+
+<div class="notifications-container">
+
+    <h2 style="text-align: center; margin-bottom: 20px;">پیام‌های خوانده شده</h2>
+
+    {% if notifications %}
+        {% for notif in notifications %}
+            <div class="notification-card"
+                {% if notif.eternal %}
+                    onclick="handleNotificationClick({{ notif.id }}, '{{ notif.eternal.id }}', 'eternal')"
+                {% elif notif.news %}
+                    onclick="handleNotificationClick({{ notif.id }}, '{{ notif.news.id }}', 'news')"
+                {% endif %}
+            >
+
+                <span class="notification-title">
+                    {% if notif.eternal %}
+                        <a href="/eternals/{{ notif.eternal.id }}/" target="_blank" style="text-decoration: none; color: inherit;" onclick="markNotificationAsRead({{ notif.id }})">
+                            {{ notif.title }}
+                        </a>
+                    {% elif notif.news %}
+                        <a href="/news/{{ notif.news.id }}/" target="_blank" style="text-decoration: none; color: inherit;" onclick="markNotificationAsRead({{ notif.id }})">
+                            {{ notif.title }}
+                        </a>
+                    {% else %}
+                        {{ notif.title }}
+                    {% endif %}
+                    <span class="notification-date">
+                        ({{ notif.created_at|to_jalali }})
+                    </span>
+                </span>
+                <div class="notification-description">
+                    {{ notif.description }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center;">پیامی برای نمایش وجود ندارد.</p>
+    {% endif %}
+
+    <!--<div style="text-align: center;">
+        <a href="{% url 'notification:notifications_list' %}" class="btn-back">بازگشت به همه پیام‌ها</a>
+    </div>-->
+</div>
+
+<script>
+    function handleNotificationClick(notifId, targetId, type) {
+        let url = '';
+        if (type === 'eternal') {
+            url = `/eternals/${targetId}/`;
+        } else if (type === 'news') {
+            url = `/news/${targetId}/`;
+        }
+        if (url) {
+            markNotificationAsRead(notifId);
+            window.open(url, '_blank');
+        }
+    }
+
+    function markNotificationAsRead(notificationId) {
+        fetch("{% url 'notification:mark_read' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                'notification_id': notificationId
+            })
+        }).then(response => response.json())
+          .then(data => {
+              console.log('Marked as read:', data);
+          });
+    }
+</script>
+
+{% endblock %}

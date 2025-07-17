@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 {% load static %}
+{% load notification_tags %}
+
 
 
 <html lang="fa">
 <head>
+    <link rel="icon" href="{% static 'images/faicon.png' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="{% static 'css/persian-datepicker.min.css' %}">
+
     <!-- Bootstrap CSS (RTL) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
 
@@ -12,95 +18,137 @@
 
     <meta charset="UTF-8">
     <title>{% block title %}سایت همیار{% endblock %}</title>
+    
+    
+
+
     <style>
 
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* 5 ستون مساوی */
+            gap: 10px 20px; /* فاصله عمودی و افقی بین آیتم‌ها */
+        }
+
+        .category-grid a {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            color: inherit;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s ease;
+        }
+
+        .category-grid a:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* برای تاکید روی دسته انتخاب شده */
+        .category-grid a.text-danger {
+            border-color: #69d4f5;
+            font-weight: 600;
+            color: #69d4f5;
+            background-color: #69d4f5;
+        }
+
+
+        @media (max-width: 768px) {
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr); /* دو ستون در صفحه کوچک */
+            }
+        }
+
+
+        /* 🌐 تنظیمات پایه */
+        html, body {
+            direction: rtl;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            overflow: visible !important;
+            position: static !important;
+            z-index: auto !important;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        /* 📄 فرم‌ها */
         form .form-group {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
         }
 
         form .form-label {
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: #444;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #444;
         }
 
         form input[type="text"],
         form input[type="file"],
         form textarea,
         form select {
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        font-size: 15px;
-        box-sizing: border-box;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+            box-sizing: border-box;
         }
 
         form .text-danger {
-        font-size: 13px;
-        color: #d32f2f;
-        margin-top: 5px;
+            font-size: 13px;
+            color: #d32f2f;
+            margin-top: 5px;
         }
 
         form button.submit-btn {
-        margin-top: 30px;
-        width: 100%;
-        padding: 12px;
-        background-color: #2196f3;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        transition: background-color 0.3s;
+            margin-top: 30px;
+            width: 100%;
+            padding: 12px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: background-color 0.3s;
         }
 
         form button.submit-btn:hover {
-        background-color: #1976d2;
+            background-color: #1976d2;
         }
 
-        
-        
-        
+        /* 📢 پیام‌ها (Alerts) */
         .alert-danger {
-        background-color: #dc3545 !important; /* قرمز Bootstrap */
-        color: #fff !important;               /* سفید برای خوانایی */
+            background-color: #dc3545 !important;
+            color: #fff !important;
         }
 
         .alert-success {
-        background-color: #198754 !important; /* سبز Bootstrap */
-        color: #fff !important;               /* سفید برای خوانایی */
+            background-color: #198754 !important;
+            color: #fff !important;
         }
 
         .alert-warning {
-        background-color: #ffc107 !important;
-        color: #000 !important;
+            background-color: #ffc107 !important;
+            color: #000 !important;
         }
 
         .alert-info {
-        background-color: #0dcaf0 !important;
-        color: #000 !important;
+            background-color: #0dcaf0 !important;
+            color: #000 !important;
         }
 
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-            direction: rtl;
-            background-color: #ffffff;
-        }
-
+        /* 🧭 ناوبری (Navigation) */
         header {
-            background-color: #ffffff; /* یا transparent */
+            background-color: #ffffff;
             padding: 0;
         }
-
-        footer {
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-        }
-
 
         nav ul {
             list-style: none;
@@ -113,33 +161,40 @@
 
         nav ul li {
             position: relative;
+            z-index: 9999;
         }
 
         nav ul li a {
-            color: rgb(0, 0, 0);
+            color: #000;
             text-decoration: none;
             padding: 8px;
             display: block;
         }
 
-        nav ul li:hover > a {
-            background-color: #444;
-            border-radius: 4px;
+        nav ul li:hover > .profile-menu {
+            display: block !important;
+            position: absolute !important;
+            top: 100% !important;
+            right: 0 !important;
+            background: white !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+            min-width: 180px !important;
+            z-index: 10000 !important;
         }
 
         .profile-menu {
+            display: none;
             position: absolute;
+            top: 100%;
             right: 0;
-            background: #fff;
-            color: #000;
-            list-style: none;
+            background: white;
+            min-width: 200px;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            z-index: 9999;
             padding: 0;
             margin: 0;
-            display: none;
-            min-width: 180px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
+            list-style: none;
         }
 
         .profile-menu li a {
@@ -153,12 +208,67 @@
             background-color: #f0f0f0;
         }
 
-        nav ul li:hover .profile-menu {
-            display: block;
+        /* 🧾 کارت‌ها و لیست‌ها */
+        .card,
+        .container,
+        .row {
+            overflow: visible !important;
+            position: static !important;
+            z-index: auto !important;
         }
 
-        main {
-            padding: 20px;
+        .card {
+            z-index: 1 !important;
+        }
+
+        .card.mb-4 {
+            position: static !important;
+        }
+
+        .list-group {
+            overflow: visible !important;
+        }
+
+        .list-group-item {
+            overflow: visible !important;
+            position: static !important;
+            z-index: auto !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            cursor: default;
+        }
+
+        .list-group-item strong {
+            font-weight: 600;
+        }
+
+        .list-group-item small.text-muted {
+            font-size: 0.85rem;
+        }
+
+        .list-group-item a.btn {
+            margin-left: 5px;
+        }
+
+        /* ⛓ سایر تنظیمات */
+        .dropdown-menu {
+            position: fixed !important;
+            z-index: 10000 !important;
+            top: auto !important;
+            left: auto !important;
+        }
+
+        .navbar {
+            z-index: 9999;
+            position: relative;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
         }
 
         footer nav ul {
@@ -166,6 +276,10 @@
             gap: 15px;
         }
     </style>
+
+
+
+
     <!-- Persian Datepicker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
     <!-- Cropper.js CSS -->
@@ -179,7 +293,10 @@
 </head>
 <body>
 
-<header>
+    
+
+
+    <header>
     <nav style="
         background-color: rgba(43, 247, 247, 0.85);
         display: flex;
@@ -192,9 +309,24 @@
         -webkit-backdrop-filter: saturate(180%) blur(10px);
     ">
         <!-- لوگو سمت راست -->
-        <div style="flex: 0 0 auto; text-align: center; margin-left: 1cm; display: flex; flex-direction: column; justify-content: center;">
-            <a href="/">
-                <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 70px;">
+        <div style="
+            flex: 0 0 auto;
+            text-align: center;
+            margin-left: 1cm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 200px;
+            height: 70px;
+        ">
+            <a href="/" style="display: inline-block; width: 200px; height: 70px;">
+                <img 
+                    src="{% static 'images/logo.png' %}" 
+                    alt="Logo" 
+                    width="200" 
+                    height="70" 
+                    style="display: block; width: 100%; height: 100%; object-fit: contain;"
+                >
             </a>
         </div>
 
@@ -218,15 +350,16 @@
 
                 {% if user.is_authenticated %}
                     <li><a href="{% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
-                    <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
+                    
                 {% else %}
                     <li><a href="{% url 'accounts:login' %}?next={% url 'wallet:charge_wallet' %}">شارژ کیف پول</a></li>
                     <li><a href="{% url 'accounts:login' %}?next={% url 'accounts:dashboard' %}">پروفایل</a></li>
                 {% endif %}
 
                 {% if user.is_authenticated %}
-                    <li>
-                        <a href="#">
+                    <!-- 🔹 منوی پروفایل -->
+                    <li class="position-relative">
+                        <a href="#" class="d-inline-flex align-items-center">
                             {% if user.gender == 'male' %}
                                 آقای {{ user.last_name }}
                             {% elif user.gender == 'female' %}
@@ -234,9 +367,9 @@
                             {% else %}
                                 {{ user.get_full_name|default:user.phone }}
                             {% endif %}
+                            <span class="ms-1">⌄</span>
                         </a>
                         <ul class="profile-menu">
-                            <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
                             <li><a href="{% url 'accounts:complete_profile' %}?phone={{ user.phone }}">ویرایش پروفایل</a></li>
 
                             {% if user.allowed_categories.exists %}
@@ -245,32 +378,57 @@
                                 <li><a href="{% url 'martyrs:create_martyr' %}">افزودن شهید</a></li>
                             {% endif %}
 
-                            
-
                             {% if user.is_staff %}
-                                <li><a href="{% url 'accounts:user_list' %}">مدیریت کاربران</a></li>
-                                <li><a href="{% url 'news:manage_categories' %}">دسته‌بندی‌ها</a></li>
-                                <li><a href="{% url 'donation:donationcause_list' %}">مدیریت دلایل پرداخت</a></li>
-                                <li><a href="{% url 'donation:donation_wallet_report' %}">گزارش صدقات و کیف پول</a></li>
-
+                                <li><a href="{% url 'accounts:dashboard' %}">داشبورد</a></li>
                             {% endif %}
 
+                            <li><a href="{% url 'donation:user_donation_list' %}">لیست صدقات من</a></li>
                             <li><a href="{% url 'accounts:logout' %}">خروج</a></li>
                         </ul>
+                    </li>
 
+                    <!-- 🔹 منوی پیام‌ها -->
+                    <li class="position-relative">
+                        <a href="{% url 'notification:unread_notifications_list' %}" class="d-inline-flex align-items-center">
+                            <img src="{% static 'images/message-icon.png' %}" alt="پیام‌ها" style="height: 24px;">
+                            <span id="unread-notifications-count"
+                                style="background-color: #e74c3c; color: white; border-radius: 12px; padding: 2px 8px;
+                                        font-size: 12px; font-weight: 700; margin-left: 6px; min-width: 22px;
+                                        text-align: center; display: inline-block;">
+                                0
+                            </span>
+                            <span class="ms-1">⌄</span>
+                        </a>
+                        <ul class="profile-menu">
+                            <li><a href="{% url 'notification:unread_notifications_list' %}">پیام‌های خوانده نشده</a></li>
+                            <li><a href="{% url 'notification:read_notifications_list' %}">پیام‌های خوانده‌شده</a></li>
+                            <li><a href="{% url 'notification:create_notification' %}">ارسال پیام</a></li>
+                            <li><a href="{% url 'notification:create_notification_hidden' %}">ارسال پیام به مدیران</a></li>
+                            <li><a href="{% url 'notification:notification_settings' %}">تنظیمات پیام</a></li>
+                            <li><a href="{% url 'notification:buy_coupon' %}">خرید کوپن ارسال پیام</a></li>
+                            <li><a href="{% url 'notification:coupon-list' %}">لیست کوپن‌ها</a></li>
+
+                            {% is_notification_manager as is_manager %}
+                            {% if is_manager %}
+                                <li><a href="{% url 'notification:pending_notifications_list' %}">تأیید پیام‌ها</a></li>
+                            {% endif %}
+                        </ul>
                     </li>
                 {% else %}
                     <li><a href="{% url 'accounts:login' %}">ورود</a></li>
                 {% endif %}
+
             </ul>
 
             <!-- نوشته زیر منو -->
             <div style="margin-top: 10px; font-weight: bold; font-size: 1.2em; color: #004141;">
-                همه با هم 
+                همه با هم
             </div>
         </div>
     </nav>
 </header>
+
+
 
 
 
@@ -306,20 +464,45 @@
     یار هم می‌مانیم 💚
 </footer>
 
+
+
+
 <!-- jQuery -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 
-<!-- Persian Date core -->
+<!-- Persian Date core 
 <script src="https://cdn.jsdelivr.net/npm/persian-date@1.0.6/dist/persian-date.min.js"></script>
+-->
 
-<!-- Persian Datepicker -->
+<script src="{% static 'js/persian-date.min.js' %}"></script>
+<script src="{% static 'js/persian-datepicker.min.js' %}"></script>
+
+<!-- Persian Datepicker 
 <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-
+-->
 
 <!-- Bootstrap Bundle JS (includes Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- اسکریپت شمارش پیام‌های خوانده‌نشده -->
+<script>
+    function fetchUnreadNotificationsCount() {
+        $.ajax({
+            url: "{% url 'notification:unread_notifications_count' %}",
+            type: "GET",
+            success: function (data) {
+                $("#unread-notifications-count").text(data.count);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error fetching unread notifications count:", error);
+            }
+        });
+    }
 
+    $(document).ready(function () {
+        fetchUnreadNotificationsCount();
+    });
+</script>
 
 {% block scripts %}{% endblock %}
 <!-- Cropper.js JS -->
@@ -327,6 +510,10 @@
 
 {% block extra_js %}
 {% endblock %}
+
+
+
+
 
 </body>
 </html>

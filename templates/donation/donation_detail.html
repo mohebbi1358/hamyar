@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="dashboard-container" style="max-width: 600px; margin: 0 auto;">
+
+  <div class="dashboard-card" style="padding: 20px; text-align: center;">
+    <h2>جزئیات پرداخت</h2>
+
+    <p>مبلغ پرداخت شده: <strong>{{ donation.amount|intcomma }}</strong> تومان</p>
+    <p>وضعیت پرداخت:
+      {% if donation.status == "SUCCESS" %}
+        <span style="color: green;">موفق</span>
+      {% elif donation.status == "FAILED" %}
+        <span style="color: red;">ناموفق</span>
+      {% else %}
+        <span>در انتظار</span>
+      {% endif %}
+    </p>
+    <p>روش پرداخت:
+      {% if donation.pay_method == "wallet" %}
+        کیف پول
+      {% else %}
+        درگاه بانکی
+      {% endif %}
+    </p>
+
+    {% if donation.status == "SUCCESS" %}
+
+        {% if is_system_payment %}
+            <div class="alert alert-success" style="margin-top: 20px;">
+                کوپن ارسال پیام شما ثبت شد.
+                <br>
+                بدیهی است تمامی پرداختی‌های شما صرف امور خیریه خواهد شد.
+            </div>
+            <div>
+                <a href="{% url 'notification:create_notification' %}" class="btn btn-success" style="margin-top: 10px;">
+                    ارسال پیام
+                </a>
+            </div>
+
+        {% elif donation.martyr %}
+            <div class="alert alert-success" style="margin-top: 20px;">
+                یادشان گرامی، راهشان پر رهرو باد. <br>
+                هدیه شما ثبت شد. از همراهی شما با خیریه فردوس برین فردو متشکریم.
+            </div>
+            <a href="{% url 'martyrs:martyr_detail' martyr_id=donation.martyr.id %}" class="btn btn-success" style="margin: 5px;">
+                درباره شهید {{ donation.martyr.first_name }} {{ donation.martyr.last_name }}
+            </a>
+
+        {% elif donation.eternal %}
+            <div class="alert alert-success" style="margin-top: 20px;">
+                خداوند {{ donation.eternal.first_name }} {{ donation.eternal.last_name }} را بیامرزد.
+                هدیه شما ثبت شد. از همراهی شما با خیریه فردوس برین متشکریم.
+            </div>
+            <a href="{% url 'eternals:detail' pk=donation.eternal.id %}" class="btn btn-success" style="margin: 5px;">
+                درباره جاودانه
+            </a>
+
+        {% else %}
+            <div class="alert alert-success" style="margin-top: 20px;">
+                هدیه شما ثبت شد. از همراهی شما با خیریه فردوس برین فردو متشکریم.
+            </div>
+        {% endif %}
+
+    {% elif donation.status == "FAILED" %}
+
+        {% if is_system_payment %}
+            <div class="alert alert-danger" style="margin-top: 20px;">
+                خرید کوپن ارسال پیام با شکست مواجه شد.
+                <br>
+                می‌توانید دوباره تلاش نمایید.
+            </div>
+            <div>
+                <a href="{{ system_failed_link }}" class="btn btn-danger" style="margin-top: 10px;">
+                    خرید مجدد کوپن
+                </a>
+            </div>
+
+        {% else %}
+            <div class="alert alert-danger" style="margin-top: 20px;">
+                پرداخت شما موفق نبود.<br>
+                در صورت تمایل مجدداً تلاش نمایید.
+            </div>
+            {% if donation.eternal %}
+                <a href="{% url 'donation:donate_for_eternal' eternal_id=donation.eternal.id %}" class="btn btn-danger" style="margin: 5px;">
+                    تلاش مجدد برای صدقه به نیت {{ donation.eternal.first_name }} {{ donation.eternal.last_name }}
+                </a>
+            {% elif donation.martyr %}
+                <a href="{% url 'donation:donate_for_martyr' martyr_id=donation.martyr.id %}" class="btn btn-danger" style="margin: 5px;">
+                    تلاش مجدد برای صدقه به نیت شهید {{ donation.martyr.first_name }} {{ donation.martyr.last_name }}
+                </a>
+            {% else %}
+                <a href="{% url 'donation:donate' %}" class="btn btn-danger" style="margin: 5px;">
+                    تلاش مجدد برای صدقه
+                </a>
+            {% endif %}
+        {% endif %}
+
+    {% else %}
+        <div style="margin-top: 20px;">
+            وضعیت پرداخت هنوز مشخص نیست. لطفاً کمی بعد دوباره بررسی کنید.
+        </div>
+    {% endif %}
+
+
+
+    {% if donation.pay_method == "wallet" %}
+        <a href="/wallet/report/" class="btn btn-info" style="margin-top: 15px;">
+            مشاهده گزارش کیف پول
+        </a>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

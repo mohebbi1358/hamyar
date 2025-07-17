@@ -1,10 +1,15 @@
 from django.urls import path
 from . import views
 from .views import CondolenceMessageCreateView
+from .views import EternalsSearchView
+
 
 app_name = 'eternals'
 
 urlpatterns = [
+    
+    path('search/', EternalsSearchView.as_view(), name='eternals_search'),
+
     path('', views.EternalsListView.as_view(), name='list'),
     path('create/', views.EternalsCreateView.as_view(), name='create'),
 

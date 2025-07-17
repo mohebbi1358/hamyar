@@ -31,14 +31,16 @@
     <!-- دسته‌بندی -->
     <div class="mb-3">
         <strong>دسته‌بندی:</strong>
-        <a href="{% url 'home' %}"
-           class="ms-3 {% if not selected_category_id %}text-danger fw-bold{% endif %}">همه</a>
-        {% for category in categories %}
-            <a href="?category={{ category.id }}"
-               class="ms-3 {% if selected_category_id == category.id %}text-danger fw-bold{% endif %}">
-                {{ category.name }}
-            </a>
-        {% endfor %}
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            <a href="{% url 'home' %}"
+            class="btn btn-light py-1 px-3 {% if not selected_category_id %}text-danger fw-bold border-danger{% endif %}">همه</a>
+            {% for category in categories %}
+                <a href="?category={{ category.id }}"
+                class="btn btn-light py-1 px-3 {% if selected_category_id == category.id %}text-danger fw-bold border-danger{% endif %}">
+                    {{ category.name }}
+                </a>
+            {% endfor %}
+        </div>
     </div>
 
     <!-- لیست اخبار -->

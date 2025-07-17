@@ -12,7 +12,9 @@ urlpatterns = [
     path('', home, name='home'),
     path('martyrs/', include('martyrs.urls')),
     path('news/', include('news.urls')),
-    path('eternals/', include('eternals.urls', namespace='eternals')),
+    path('eternals/', include(('eternals.urls', 'eternals'), namespace='eternals')),
+    path('notifications/', include('notification.urls', namespace='notification')),
+
 ]
 
 if settings.DEBUG:

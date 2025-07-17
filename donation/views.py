@@ -1,3 +1,12 @@
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib import messages
+from notification.models import NotificationGroup, NotificationCoupon
+from donation.models import Donation
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from notification.models import NotificationGroup, NotificationCoupon
+from donation.models import Donation
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -8,6 +17,8 @@ from wallet.models import Wallet, WalletTransaction
 from .utils import process_wallet_donation
 from donation.models import Donation
 import random
+
+
 
 
 
@@ -43,21 +54,32 @@ def donate(request):
         cause_obj = get_object_or_404(DonationCause, id=cause_id)
 
         if pay_method == 'wallet':
-            success, error_msg = process_wallet_donation(request.user, amount, cause_obj)
+            success, error_msg, donation = process_wallet_donation(
+                request.user,
+                amount,
+                cause_obj
+            )
+
             if not success:
                 messages.error(request, error_msg)
                 return redirect('donation:donate')
 
             messages.success(request, "پرداخت از طریق کیف پول با موفقیت انجام شد.")
-            return redirect('wallet:wallet_transactions_report')
+            return redirect('donations:donation_detail', pk=donation.id)
 
         elif pay_method == 'gateway':
             donation = Donation.objects.create(
                 amount=amount,
                 cause=cause_obj,
                 status='PENDING',
-                user=request.user
+                user=request.user,
+                pay_method='gateway'
             )
+
+            
+            # ذخیره آدرس بازگشت در سشن (می‌تونی در صورت نیاز تغییر بدی)
+            request.session["payment_return_url"] = reverse("donation:donate")
+            
             return redirect('donation:fake_gateway', donation_id=donation.id)
 
         else:
@@ -73,10 +95,17 @@ def donate(request):
     })
 
 
+
+
+
 @login_required
 def donate_for_eternal(request, eternal_id):
     causes = DonationCause.objects.filter(is_active=True)
     eternal = get_object_or_404(Eternals, pk=eternal_id)
+
+    next_url = request.GET.get("next")
+    if next_url:
+        request.session["payment_return_url"] = next_url
 
     if request.method == 'POST':
         amount_str = request.POST.get('amount', '').replace(',', '')
@@ -97,18 +126,21 @@ def donate_for_eternal(request, eternal_id):
             return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
 
         cause_obj = get_object_or_404(DonationCause, id=cause_id)
-        # تغییر فقط متن دلیل (برای تراکنش)
-        cause_text = f"{cause_obj.title} برای {eternal.first_name} {eternal.last_name}"
 
         if pay_method == 'wallet':
-            success, error_msg = process_wallet_donation(
-                request.user, amount, cause_obj, martyr=None, eternal=eternal)
+            success, error_msg, donation = process_wallet_donation(
+                request.user,
+                amount,
+                cause_obj,
+                martyr=None,
+                eternal=eternal
+            )
             if not success:
                 messages.error(request, error_msg)
                 return redirect('donation:donate_for_eternal', eternal_id=eternal_id)
 
             messages.success(request, "پرداخت از طریق کیف پول با موفقیت انجام شد.")
-            return redirect('eternals:detail', pk=eternal_id)
+            return redirect('donations:donation_detail', pk=donation.id)
 
         elif pay_method == 'gateway':
             donation = Donation.objects.create(
@@ -116,8 +148,13 @@ def donate_for_eternal(request, eternal_id):
                 cause=cause_obj,
                 status='PENDING',
                 user=request.user,
-                eternal=eternal
+                eternal=eternal,
+                pay_method='gateway'
             )
+
+            # ذخیره آدرس بازگشت در سشن
+            request.session["payment_return_url"] = reverse("eternals:detail", kwargs={"pk": eternal.id})
+
             return redirect('donation:fake_gateway', donation_id=donation.id)
 
         else:
@@ -131,6 +168,12 @@ def donate_for_eternal(request, eternal_id):
         'martyr': None,
         'suggested_amounts': suggested_amounts,
     })
+
+
+
+
+
+
 
 
 @login_required
@@ -157,17 +200,21 @@ def donate_for_martyr(request, martyr_id):
             return redirect('donation:donate_for_martyr', martyr_id=martyr_id)
 
         cause_obj = get_object_or_404(DonationCause, id=cause_id)
-        cause_text = f"{cause_obj.title} برای {martyr.first_name} {martyr.last_name}"
 
         if pay_method == 'wallet':
-            success, error_msg = process_wallet_donation(
-                request.user, amount, cause_obj, martyr=martyr, eternal=None)
+            success, error_msg, donation = process_wallet_donation(
+                request.user,
+                amount,
+                cause_obj,
+                martyr=martyr,
+                eternal=None
+            )
             if not success:
                 messages.error(request, error_msg)
                 return redirect('donation:donate_for_martyr', martyr_id=martyr_id)
 
             messages.success(request, "پرداخت از طریق کیف پول با موفقیت انجام شد.")
-            return redirect('wallet:wallet_transactions_report')
+            return redirect('donations:donation_detail', pk=donation.id)
 
         elif pay_method == 'gateway':
             donation = Donation.objects.create(
@@ -175,8 +222,16 @@ def donate_for_martyr(request, martyr_id):
                 cause=cause_obj,
                 status='PENDING',
                 user=request.user,
-                martyr=martyr
+                martyr=martyr,
+                pay_method='gateway'
             )
+
+
+            # ذخیره آدرس بازگشت در سشن
+            request.session["payment_return_url"] = reverse(
+                "martyrs:martyr_detail", kwargs={"martyr_id": martyr_id}
+            )
+
             return redirect('donation:fake_gateway', donation_id=donation.id)
 
         else:
@@ -192,30 +247,135 @@ def donate_for_martyr(request, martyr_id):
     })
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.csrf import csrf_exempt
+from donation.models import Donation
+from django.contrib import messages
+
+
+from notification.services import confirm_notification_coupon_purchase
+
+
+
 @csrf_exempt
+@login_required
 def payment_callback(request, donation_id):
     donation = get_object_or_404(Donation, id=donation_id)
-
     status = request.GET.get('status', 'FAILED')
     ref_id = request.GET.get('ref_id', '')
-    gateway_response = str(dict(request.GET))
 
     donation.status = 'SUCCESS' if status == 'OK' else 'FAILED'
     donation.ref_id = ref_id
-    donation.gateway_response = gateway_response
     donation.save()
 
+    # برای خرید کوپن، تأیید خرید را انجام بده (صرفاً اگر موفق بوده)
+    if donation.status == 'SUCCESS':
+        if donation.cause and donation.cause.title == "خرید کوپن ارسال پیام":
+            confirm_notification_coupon_purchase(donation, payment_method="bank")
+
+    return redirect('donation:donation_detail', pk=donation.id)
+
+
+
+
+
+
+
+@csrf_exempt
+def delete_payment_callback(request, donation_id):
+    print("Donatean\CALLBACK CALLED")
+    print("status:", request.GET.get('status'))
+    print("ref_id:", request.GET.get('ref_id'))
+
+    status = request.GET.get('status')
+    ref_id = request.GET.get('ref_id')
+    gateway_response = dict(request.GET.lists())
+
+    donation = get_object_or_404(Donation, id=donation_id)
+
     if status == 'OK':
+        donation.status = 'SUCCESS'
+        donation.save()
         messages.success(request, "پرداخت با موفقیت انجام شد.")
-        return redirect('home')
+        # می‌توانید اینجا بقیه منطق کوپن یا نوتیفیکیشن‌ها رو هم اضافه کنید
+
     else:
-        messages.error(request, "پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.")
-        return redirect('donation:donate')
+        donation.status = 'FAILED'
+        donation.save()
+        messages.error(request, "پرداخت ناموفق بود.")
+
+    # همیشه به صفحه جزییات پرداخت ریدایرکت کن
+    return redirect('donations:donation_detail', pk=donation.id)
 
 
+@login_required
 def fake_bank_gateway(request, donation_id):
     donation = get_object_or_404(Donation, id=donation_id)
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        ref_id = request.POST.get('ref_id', 'FAKE123')
+
+        callback_url = reverse(
+            'donation:payment_callback',
+            args=[donation.id]
+        )
+        # اگر GET parameters لازم داری:
+        callback_url += f"?status={'OK' if status == 'success' else 'FAILED'}&ref_id={ref_id}"
+
+        return redirect(callback_url)
+
     return render(request, 'donation/fake_gateway.html', {'donation': donation})
+
+
+
+
+
+
+
+
+@login_required
+def delete_fake_bank_gateway(request, donation_id):
+    donation = get_object_or_404(Donation, id=donation_id)
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        if status == 'success':
+            donation.status = 'SUCCESS'
+            messages.success(request, "پرداخت با موفقیت انجام شد.")
+        else:
+            donation.status = 'FAILED'
+            messages.error(request, "پرداخت ناموفق بود.")
+        donation.save()
+
+        return redirect('donations:donation_detail', pk=donation.id)
+
+    return render(request, 'donation/fake_gateway.html', {'donation': donation})
+
+
+
+
+
+
+
+
+
+
 
 
 def fake_wallet_charge_gateway(request, wallet_tx_id):
@@ -382,3 +542,137 @@ def export_to_excel(donations, wallet_transactions):
     response['Content-Disposition'] = f'attachment; filename={filename}'
     wb.save(response)
     return response
+
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Donation
+
+
+
+from django.shortcuts import render, get_object_or_404
+from .models import Donation
+
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
+from donation.models import Donation
+
+@login_required
+def donation_detail(request, pk):
+    donation = get_object_or_404(Donation, id=pk)
+
+    is_system_payment = False
+    system_link = None
+    system_failed_link = None
+
+    if donation.cause and donation.cause.title == "خرید کوپن ارسال پیام":
+        is_system_payment = True
+        system_link = reverse('notification:notifications_list')
+        system_failed_link = reverse('notification:buy_coupon')
+
+    context = {
+        "donation": donation,
+        "is_system_payment": is_system_payment,
+        "system_link": system_link,
+        "system_failed_link": system_failed_link,
+    }
+    return render(request, "donation/donation_detail.html", context)
+
+
+
+
+
+
+
+
+# donation/views.py
+
+from django.views.generic import ListView
+from django.db.models import Sum, Q
+from django.utils import timezone
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import Donation
+
+
+
+
+
+
+
+
+
+import jdatetime
+from datetime import datetime, time
+
+class UserDonationListView(LoginRequiredMixin, ListView):
+    model = Donation
+    template_name = 'donation/user_donation_list.html'
+    context_object_name = 'donations'
+    paginate_by = 20
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Donation.objects.filter(user=user)
+
+        start_date_str = self.request.GET.get('start_date')
+        end_date_str = self.request.GET.get('end_date')
+
+        start_datetime = None
+        end_datetime = None
+
+        if start_date_str:
+            try:
+                y, m, d = map(int, start_date_str.replace('-', '/').split('/'))
+                gregorian_date = jdatetime.date(y, m, d).togregorian()
+                start_datetime = datetime.combine(gregorian_date, time.min)
+            except:
+                start_datetime = None
+
+        if end_date_str:
+            try:
+                y, m, d = map(int, end_date_str.replace('-', '/').split('/'))
+                gregorian_date = jdatetime.date(y, m, d).togregorian()
+                end_datetime = datetime.combine(gregorian_date, time.max)
+            except:
+                end_datetime = None
+
+        # حالا تصمیم می‌گیریم روی چه بازه‌ای فیلتر کنیم
+        if start_datetime and end_datetime:
+            qs = qs.filter(created_at__range=(start_datetime, end_datetime))
+        elif start_datetime:
+            qs = qs.filter(created_at__gte=start_datetime)
+        elif end_datetime:
+            qs = qs.filter(created_at__lte=end_datetime)
+        # اگر هیچ‌کدام نبود → بدون فیلتر تاریخ
+
+        status = self.request.GET.get('status')
+        if status in ['SUCCESS', 'FAILED', 'PENDING']:
+            qs = qs.filter(status=status)
+
+        return qs.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        qs = self.get_queryset()
+        total = qs.aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+        context['total_amount'] = total
+        return context
+
+
+
+
+
+
+
+
+
+
+

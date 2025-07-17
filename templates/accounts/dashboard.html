@@ -57,36 +57,40 @@
 <div class="dashboard-container">
     <div class="welcome">
         <h2>🎉 خوش آمدید {{ request.user.first_name|default:"کاربر" }}!</h2>
-        <p>به داشبورد شخصی خود خوش آمدید.</p>
+        <p>داشبورد مدیریتی</p>
     </div>
 
     <div class="dashboard-grid">
         <div class="dashboard-card">
-            <div>📄 ارسال خبر</div>
-            <a href="{% url 'news:create_news' %}">افزودن خبر جدید</a>
+            <div>📄 👤 مدیریت کاربران</div>
+            <a href="{% url 'accounts:user_list' %}">مدیریت کاربران</a>
         </div>
         <div class="dashboard-card">
-            <div>🕊️ افزودن شهید</div>
-            <a href="{% url 'martyrs:create_martyr' %}">ثبت شهید</a>
+            <div>🕊️ دسته‌بندی‌ها</div>
+            <a href="{% url 'news:manage_categories' %}">دسته‌بندی‌ها</a>
         </div>
         <div class="dashboard-card">
-            <div>📰 مشاهده اخبار</div>
-            <a href="{% url 'news:news_list' %}">لیست اخبار</a>
+            <div>📰 مدیریت دلایل پرداخت</div>
+            <a href="{% url 'donation:donationcause_list' %}">مدیریت دلایل پرداخت</a>
         </div>
         <div class="dashboard-card">
-            <div>👤 پروفایل</div>
-            <a href="{% url 'accounts:complete_profile' %}?phone={{ user.phone }}">ویرایش پروفایل</a>
+            <div>👤 گزارش صدقات و کیف پول</div>
+            <a href="{% url 'donation:donation_wallet_report' %}">گزارش صدقات و کیف پول</a>
         </div>
         <div class="dashboard-card">
-            <div>💰 کیف پول</div>
-            <a href="{% url 'wallet:wallet_dashboard' %}">مشاهده کیف پول</a>
+            <div>💰 مدیریت گروه‌های پیام</div>
+            <a href="{% url 'notification:notification_group_list' %}">مدیریت گروه‌های پیام</a>
         </div>
         <div class="dashboard-card">
+            <div>💰 مدیریت اخبار</div>
+            <a href="{% url 'news:manage_news' %}">مدیریت اخبار</a>
+        </div>
+        <!--<div class="dashboard-card">
             <div>❤️ صدقه</div>
             <a href="{% url 'donation:donate' %}">پرداخت صدقه</a>
         </div>
 
-<!--
+
         <div class="dashboard-card">
             <div>📂 مدیریت دسته‌بندی‌ها</div>
             <a href="{% url 'news:manage_categories' %}">دسته‌بندی‌ها</a> 

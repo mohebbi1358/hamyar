@@ -1,9 +1,13 @@
 from django import forms
 from donation.models import Donation, DonationCause
+from django import forms
+from .models import Donation, DonationCause
+
+
 
 class DonationForm(forms.ModelForm):
     cause = forms.ModelChoiceField(
-        queryset=DonationCause.objects.filter(is_active=True),
+        queryset=DonationCause.objects.filter(is_active=True, is_system=False),
         empty_label="یک علت را انتخاب کنید",
         widget=forms.Select()
     )
@@ -14,6 +18,11 @@ class DonationForm(forms.ModelForm):
 
 
 
+
+
+
+
+
 # donation/forms.py
 from django import forms
 from .models import DonationCause
@@ -21,4 +30,4 @@ from .models import DonationCause
 class DonationCauseForm(forms.ModelForm):
     class Meta:
         model = DonationCause
-        fields = ['title', 'is_active']
+        fields = ['title', 'is_system', 'is_active']

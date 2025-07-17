@@ -26,7 +26,7 @@
                             <li><strong>فرزند:</strong> {{ eternal.father_name }}</li>
                         {% endif %}
                         {% if eternal.death_date %}
-                            <li><strong>تاریخ فوت:</strong> {{ eternal.death_date|date:"Y/m/d" }}</li>
+                            <li><strong>تاریخ فوت:</strong> {{ eternal.death_date|to_jalali }}</li>
                         {% endif %}
                         {% if eternal.description %}
                             <li><strong>توضیحات:</strong> {{ eternal.description }}</li>
@@ -124,7 +124,7 @@
                                 <div>
                                     <strong>{{ donation.user.get_display_name|default:donation.user.phone }}</strong>
                                     → {{ donation.amount|intcomma }} تومان
-                                    → بابت {{ donation.get_cause_display }}
+<!--                                    → بابت {{ donation.get_cause_display }}-->
                                 </div>
                                 <small class="text-muted">
                                     {{ donation.created_at|to_jalali }}

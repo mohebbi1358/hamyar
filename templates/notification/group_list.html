@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>مدیریت گروه‌های پیام</h1>
+
+<a href="{% url 'notification:notification_group_create' %}" class="btn btn-success">ایجاد گروه جدید</a>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>عنوان گروه</th>
+            <th>اجباری؟</th>
+            <th>مخفی؟</th>
+            <th>هزینه ارسال</th>
+            <th>تایید مدیر؟</th>
+            <th>مدت اعتبار</th>
+            <th>عمومی؟</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for group in groups %}
+        <tr>
+            <td>{{ group.title }}</td>
+            <td>{{ group.is_mandatory|yesno:"بله,خیر" }}</td>
+            <td>{{ group.hidden|yesno:"بله,خیر" }}</td>
+            <td>{{ group.send_cost }} تومان</td>
+            <td>{{ group.needs_approval|yesno:"بله,خیر" }}</td>
+            <td>{{ group.default_expire_days }} روز</td>
+            
+            <td>{{ group.is_public|yesno:"بله,خیر" }}</td>
+            
+            <td>
+                <a href="{% url 'notification:notification_group_edit' group.pk %}" class="btn btn-primary btn-sm">ویرایش</a>
+                <a href="{% url 'notification:notification_group_delete' group.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('حذف شود؟');">حذف</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">هیچ گروهی وجود ندارد.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load jalali_filters %}
+{% load static %}
+
+{% block title %}پیام‌های خوانده نشده{% endblock %}
+
+{% block content %}
+<style>
+    .notifications-container {
+        width: 66%;
+        max-width: 900px;
+        height: 500px;
+        margin: 30px auto;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .notification-card {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .notification-card:hover {
+        transform: scale(1.02);
+        cursor: pointer;
+    }
+
+    .notification-title {
+        font-weight: bold;
+        font-size: 18px;
+        color: #333333;
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+
+    .notification-date {
+        font-size: 14px;
+        color: #2e0bf5;
+        margin-right: 10px;
+    }
+
+    .notification-description {
+        font-size: 16px;
+        color: #555555;
+        line-height: 1.5;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin: 20px auto 0;
+        background-color: #007bff;
+        color: #ffffff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .btn-back:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div class="notifications-container">
+
+    <h2 style="text-align: center; margin-bottom: 20px;">پیام‌های خوانده نشده</h2>
+
+    {% if notifications %}
+        {% for notif in notifications %}
+            <div class="notification-card"
+                 data-id="{{ notif.id }}"
+                 {% if notif.eternal %}
+                     onclick="handleNotificationClick({{ notif.id }}, '{{ notif.eternal.id }}', 'eternal')"
+                 {% elif notif.news %}
+                     onclick="handleNotificationClick({{ notif.id }}, '{{ notif.news.id }}', 'news')"
+                 {% endif %}
+            >
+                <span class="notification-title">
+                    {% if notif.eternal %}
+                        <a href="/eternals/{{ notif.eternal.id }}/"
+                           target="_blank"
+                           style="text-decoration: none; color: inherit;">
+                            {{ notif.title }}
+                        </a>
+                    {% elif notif.news %}
+                        <a href="/news/{{ notif.news.id }}/"
+                           target="_blank"
+                          
+                        {{ notif.title }}
+                    {% endif %}
+                    <span class="notification-date">
+                        ({{ notif.created_at|to_jalali }})
+                    </span>
+                </span>
+                <div class="notification-description">
+                    {{ notif.description }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center;">پیامی برای نمایش وجود ندارد.</p>
+    {% endif %}
+
+    <!--<div style="text-align: center;">
+        <a href="{% url 'notification:notifications_list' %}" class="btn-back">بازگشت به همه پیام‌ها</a>
+    </div>-->
+</div>
+
+<script>
+    // ذخیره شناسه پیام‌ها که کاربر در صفحه دیده
+    let visibleNotificationIds = new Set();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.querySelector('.notifications-container');
+
+        // بررسی هر پیام به صورت دوره‌ای (مثلاً هر 500 میلی‌ثانیه)
+        setInterval(() => {
+            const cards = container.querySelectorAll('.notification-card');
+
+            cards.forEach(card => {
+                if (isElementVisible(card, container)) {
+                    visibleNotificationIds.add(card.getAttribute('data-id'));
+                }
+            });
+        }, 500);
+
+        // هنگام ترک صفحه (رویداد beforeunload) همه پیام‌های دیده‌شده رو علامت بزن
+        window.addEventListener('beforeunload', () => {
+            if (visibleNotificationIds.size > 0) {
+                fetch("{% url 'notification:mark_read' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        notification_ids: Array.from(visibleNotificationIds)
+                    })
+                });
+            }
+        });
+    });
+
+    // تابع چک کردن اینکه المان توی viewport کانتینر هست یا نه
+    function isElementVisible(el, container) {
+        const elRect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // بررسی اینکه المان حداقل 1 ثانیه کامل داخل کانتینر بوده یا نه را باید در سمت سرور یا با زمان‌سنج دقیق‌تر انجام داد
+        // اینجا فقط بررسی می‌کنیم که در دید است
+
+        return (
+            elRect.top >= containerRect.top &&
+            elRect.bottom <= containerRect.bottom
+        );
+    }
+
+    function handleNotificationClick(notifId, targetId, type) {
+        let url = '';
+        if (type === 'eternal') {
+            url = `/eternals/${targetId}/`;
+        } else if (type === 'news') {
+            url = `/news/${targetId}/`;
+        }
+        if (url) {
+            window.open(url, '_blank');
+        }
+    }
+</script>
+
+{% endblock %}

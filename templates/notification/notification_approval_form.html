@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>ویرایش و تایید پیام</h3>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">ذخیره تغییرات</button>
+    <a href="{% url 'notification:pending_notifications_list' %}" class="btn btn-secondary">بازگشت</a>
+</form>
+{% endblock %}

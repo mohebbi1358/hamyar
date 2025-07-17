@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>پیام‌های در انتظار تایید</h3>
+
+{% if notifications %}
+    <ul class="list-group">
+        {% for n in notifications %}
+            <li class="list-group-item">
+                <strong>{{ n.title }}</strong>
+                <p>{{ n.description|truncatewords:20 }}</p>
+                <a href="{% url 'notification:notification_approval_edit' n.id %}" class="btn btn-sm btn-primary">
+                    ویرایش / تایید
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>پیامی در انتظار تایید نیست.</p>
+{% endif %}
+{% endblock %}

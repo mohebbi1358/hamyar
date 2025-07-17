@@ -16,6 +16,13 @@ from .models import Martyr
 
 
 
+
+
+
+import jdatetime
+from django import forms
+from .models import Martyr
+
 class MartyrForm(forms.ModelForm):
     birth_date = forms.CharField(
         required=False,
@@ -36,8 +43,9 @@ class MartyrForm(forms.ModelForm):
 
     class Meta:
         model = Martyr
-        # ❗️ نباید photo رو exclude کنی
-        exclude = ['birth_date', 'martyr_date']
+        fields = '__all__'
+        # توجه: اگر نمی‌خواهی همه فیلدها را داشته باشی، می‌توانی exclude کنی
+        # ولی birth_date و martyr_date نباید exclude شوند چون قرار است ذخیره شوند!
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,6 +84,17 @@ class MartyrForm(forms.ModelForm):
             except:
                 raise forms.ValidationError("تاریخ شهادت نامعتبر است.")
         return None
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.birth_date = self.cleaned_data.get('birth_date')
+        instance.martyr_date = self.cleaned_data.get('martyr_date')
+        if commit:
+            instance.save()
+        return instance
+
+
+
 
 
 

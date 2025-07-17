@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ notification.title }}</h2>
+<p>ارسال شده در: {{ notification.created_at|date:"Y-m-d H:i" }}</p>
+
+<hr>
+<div>
+    {{ notification.message|linebreaks }}
+</div>
+<hr>
+
+{% if notification.eternal_id %}
+    <a href="/eternal/{{ notification.eternal_id }}">مشاهده بیشتر</a>
+{% elif notification.news_id %}
+    <a href="/news/{{ notification.news_id }}">مشاهده بیشتر</a>
+{% endif %}
+<a href="{% url 'notification:unread_notifications_list' %}">بازگشت به پیام‌های نخوانده</a>
+{% endblock %}

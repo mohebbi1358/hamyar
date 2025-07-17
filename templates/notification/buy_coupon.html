@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container my-4">
+  <h1 class="mb-4">خرید کوپن ارسال پیام</h1>
+
+  {% if wallet %}
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+      <span>موجودی کیف پول شما:</span>
+      <strong>{{ wallet.balance|intcomma }} تومان</strong>
+    </div>
+  {% else %}
+    <div class="alert alert-danger">
+      کیف پول شما فعال نیست.
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" id="buy-coupon-form">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          {{ form.group.label_tag }}
+          {{ form.group }}
+          {% if form.group.errors %}
+            <div class="text-danger small">{{ form.group.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.quantity.label_tag }}
+          {{ form.quantity }}
+          {% if form.quantity.errors %}
+            <div class="text-danger small">{{ form.quantity.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="alert alert-secondary d-flex justify-content-between align-items-center">
+          <span>مبلغ کل:</span>
+          <strong id="total-amount">۰</strong> تومان
+        </div>
+
+        <div class="row g-2 mt-3">
+          <div class="col-12 col-md-6">
+            <button type="submit" name="pay_method" value="gateway" class="btn btn-success w-100">
+              پرداخت آنلاین
+            </button>
+          </div>
+          <div class="col-12 col-md-6">
+            <button type="submit" name="pay_method" value="wallet"
+                    class="btn btn-warning w-100"
+                    id="wallet-button" disabled>
+              پرداخت از کیف پول
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const groupSelect = document.getElementById("id_group");
+  const quantityInput = document.getElementById("id_quantity");
+  const totalAmountSpan = document.getElementById("total-amount");
+  const walletButton = document.getElementById("wallet-button");
+  const walletBalance = {{ wallet.balance|default:0 }};
+
+  const groupPrices = {};
+  {% for group in form.fields.group.queryset %}
+    groupPrices[{{ group.id }}] = {{ group.send_cost }};
+  {% endfor %}
+
+  function updateAmount() {
+    const groupId = groupSelect.value;
+    const quantity = parseInt(quantityInput.value || 0);
+
+    if (groupId && quantity > 0) {
+      const pricePerCoupon = groupPrices[groupId] || 0;
+      const total = pricePerCoupon * quantity;
+
+      totalAmountSpan.textContent = total.toLocaleString();
+
+      if (walletBalance >= total) {
+        walletButton.disabled = false;
+      } else {
+        walletButton.disabled = true;
+      }
+    } else {
+      totalAmountSpan.textContent = "۰";
+      walletButton.disabled = true;
+    }
+  }
+
+  groupSelect?.addEventListener("change", updateAmount);
+  quantityInput?.addEventListener("input", updateAmount);
+
+  window.addEventListener("load", updateAmount);
+</script>
+{% endblock %}

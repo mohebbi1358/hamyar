@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ویرایش خبر{% endblock %}
+
+{% block content %}
+{% if messages %}
+  <div style="max-width: 600px; margin: 0 auto 20px;">
+    {% for message in messages %}
+      <div style="
+          background-color: {% if message.tags == 'error' %}#ffebee{% elif message.tags == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %};
+          color: {% if message.tags == 'error' %}#c62828{% elif message.tags == 'success' %}#2e7d32{% else %}#1565c0{% endif %};
+          border-radius: 8px;
+          padding: 12px 18px;
+          margin-bottom: 10px;
+          border: 1px solid {% if message.tags == 'error' %}#ef9a9a{% elif message.tags == 'success' %}#a5d6a7{% else %}#90caf9{% endif %};
+          font-family: Vazir, sans-serif;
+          font-size: 15px;
+        ">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+
+<!-- CSS Cropper.js -->
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
+
+<!-- JS Cropper.js -->
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
+<style>
+    /* بقیه استایل‌ها بدون تغییر */
+    .form-container {
+        max-width: 700px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-container h1 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .form-container form div.field {
+        margin-bottom: 15px;
+    }
+
+    .form-container label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-container input[type="text"],
+    .form-container textarea,
+    .form-container select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        margin-top: 4px;
+    }
+
+    .form-container input[type="file"] {
+        display: block;
+        margin-top: 8px;
+    }
+
+    #formset-container {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px dashed #aaa;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .image-form {
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 16px;
+        margin: 5px 0;
+    }
+
+    .btn:hover {
+        background-color: #45a049;
+    }
+
+    #add-image {
+        background-color: #2196F3;
+    }
+
+    #add-image:hover {
+        background-color: #1976D2;
+    }
+
+    #main-image-preview {
+        width: 200px;
+        height: auto;
+        margin-top: 10px;
+        border-radius: 8px;
+        display: none; 
+    }
+
+    /* Modal Styles */
+    #cropper-modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    #cropper-modal .modal-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+        text-align: center;
+    }
+
+    #cropper-modal img {
+        max-width: 100%;
+        max-height: 500px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+
+    #cropper-modal .btn {
+        margin: 5px;
+    }
+
+    /* پیام خطا دسته‌بندی */
+    #category-error {
+        color: #c62828;
+        font-weight: bold;
+        margin-top: 8px;
+        display: none;
+        font-family: Vazir, sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+
+
+<div class="form-container">
+    <h1>✏️ ویرایش خبر</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="field">
+            <label for="{{ form.category.id_for_label }}">دسته‌بندی</label>
+            {{ form.category }}
+            <div id="category-error"></div>
+            {% for error in form.category.errors %}
+                <div class="error" style="color:red;">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.title.id_for_label }}">عنوان خبر</label>
+            {{ form.title }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.summary.id_for_label }}">خلاصه خبر</label>
+            {{ form.summary }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.body.id_for_label }}">متن خبر</label>
+            {{ form.body }}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.main_image.id_for_label }}">عکس اصلی خبر</label>
+            {{ form.main_image }}
+            {% if news.main_image %}
+                <img src="{{ news.main_image.url }}" alt="تصویر فعلی" style="max-width: 200px; display: block; margin-top: 10px; border-radius: 8px;">
+            {% endif %}
+            <img id="main-image-preview" alt="پیش نمایش عکس جدید"/>
+        </div>
+
+        <h3 style="margin-top: 30px;">📸 عکس‌های بیشتر:</h3>
+        <div id="formset-container">
+            {{ formset.management_form }}
+            {% for f in formset %}
+                <div class="image-form" style="margin-bottom: 15px;">
+                    {{ f.id }}  {# خیلی مهم برای شناسایی رکورد #}
+                    {{ f.image.label_tag }} {{ f.image }}
+                    
+                    {% if f.instance.image %}
+                        <br>
+                        <img src="{{ f.instance.image.url }}" alt="عکس قبلی" style="max-width: 100px; display: block; margin-top: 10px; border-radius: 10px;">
+                    {% endif %}
+                    
+                    {{ f.DELETE }} <label for="{{ f.DELETE.id_for_label }}">حذف</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <button type="button" id="add-image" class="btn">افزودن عکس دیگر</button>
+        <br><br>
+        <button type="submit" class="btn">ثبت تغییرات</button>
+    </form>
+</div>
+
+
+<!-- Modal Cropper -->
+<div id="cropper-modal">
+    <div class="modal-content">
+        <img id="cropper-modal-image" src="">
+        <div>
+            <button type="button" id="rotate-left" class="btn">↺ چرخش ۹۰-</button>
+            <button type="button" id="rotate-right" class="btn">↻ چرخش ۹۰+</button>
+            <button type="button" id="crop-confirm" class="btn">✅ تایید برش</button>
+            <button type="button" id="crop-cancel" class="btn" style="background-color:#f44336;">✖ لغو</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ========= Cropper بخش =========
+
+    let cropper = null;
+    let currentInput = null;
+    let previewElement = null;
+
+    const modal = document.getElementById('cropper-modal');
+    const modalImage = document.getElementById('cropper-modal-image');
+    const rotateLeftBtn = document.getElementById('rotate-left');
+    const rotateRightBtn = document.getElementById('rotate-right');
+    const cropConfirmBtn = document.getElementById('crop-confirm');
+    const cropCancelBtn = document.getElementById('crop-cancel');
+
+    function openModal(url) {
+        modalImage.src = url;
+        modal.style.display = 'flex';
+
+        if (cropper) {
+            cropper.destroy();
+        }
+
+        let aspectRatio = currentInput.name === 'main_image' ? 1 : NaN;
+
+        cropper = new Cropper(modalImage, {
+            aspectRatio: aspectRatio,
+            viewMode: 1,
+            autoCropArea: 1,
+            responsive: true,
+        });
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    rotateLeftBtn.addEventListener('click', () => {
+        if (cropper) cropper.rotate(-90);
+    });
+
+    rotateRightBtn.addEventListener('click', () => {
+        if (cropper) cropper.rotate(90);
+    });
+
+    cropCancelBtn.addEventListener('click', () => {
+        closeModal();
+    });
+
+    cropConfirmBtn.addEventListener('click', () => {
+        if (cropper && currentInput) {
+            let cropOptions = {};
+            let outputFormat = 'image/jpeg';
+            let outputQuality = 0.8;
+
+            if (currentInput.name === 'main_image') {
+                cropOptions.width = 500;
+                cropOptions.height = 500;
+                outputFormat = 'image/jpeg';
+                outputQuality = 0.8;
+            } else {
+                cropOptions.width = 700;
+                cropOptions.height = 700;
+                outputFormat = 'image/png';
+                outputQuality = 0.9;
+            }
+
+            cropper.getCroppedCanvas(cropOptions).toBlob(function (blob) {
+                const dt = new DataTransfer();
+                const croppedFile = new File(
+                    [blob],
+                    'cropped_image.' + (outputFormat === 'image/png' ? 'png' : 'jpg'),
+                    { type: outputFormat }
+                );
+                dt.items.add(croppedFile);
+                currentInput.files = dt.files;
+
+                if (previewElement) {
+                    previewElement.src = URL.createObjectURL(blob);
+                    previewElement.style.display = 'block';
+                    previewElement.style.width = '40px';
+                    previewElement.style.height = 'auto';
+                    previewElement.style.objectFit = 'cover';
+                    previewElement.style.border = '1px solid #ccc';
+                    previewElement.style.borderRadius = '4px';
+                    previewElement.style.marginTop = '10px';
+                }
+
+                closeModal();
+            }, outputFormat, outputQuality);
+        }
+    });
+
+    function attachCropper(input) {
+        input.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                currentInput = input;
+
+                let preview;
+                if (input.name === 'main_image') {
+                    preview = document.getElementById('main-image-preview');
+                } else {
+                    preview = input.closest('.image-form')?.querySelector('.image-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.classList.add('image-preview');
+                        preview.style.maxWidth = '40px';
+                        preview.style.marginTop = '10px';
+                        preview.style.borderRadius = '10px';
+                        preview.style.display = 'none';
+                        input.parentNode.appendChild(preview);
+                    }
+                }
+
+                previewElement = preview;
+                openModal(url);
+            }
+        });
+    }
+
+    const mainImageInput = document.querySelector('input[name="main_image"]');
+    if (mainImageInput) {
+        attachCropper(mainImageInput);
+    }
+
+    const formsetImageInputs = document.querySelectorAll('#formset-container input[type="file"]');
+    formsetImageInputs.forEach(input => {
+        attachCropper(input);
+    });
+
+    const addBtn = document.getElementById('add-image');
+    const container = document.getElementById('formset-container');
+    const totalForms = document.getElementById('id_images-TOTAL_FORMS');
+
+    if (addBtn) {
+        addBtn.addEventListener('click', function () {
+            const currentFormCount = parseInt(totalForms.value);
+            const oldForm = container.querySelector('.image-form');
+            const newForm = oldForm.cloneNode(true);
+
+            newForm.querySelectorAll('*').forEach(function (el) {
+                if (el.name) {
+                    el.name = el.name.replace(/images-(\d+)-/, `images-${currentFormCount}-`);
+                }
+                if (el.id) {
+                    el.id = el.id.replace(/images-(\d+)-/, `images-${currentFormCount}-`);
+                }
+            });
+
+            const fileInput = newForm.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            let preview = newForm.querySelector('.image-preview');
+            if (preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+            } else {
+                preview = document.createElement('img');
+                preview.classList.add('image-preview');
+                preview.style.maxWidth = '100px';
+                preview.style.marginTop = '10px';
+                preview.style.borderRadius = '10px';
+                preview.style.display = 'none';
+                newForm.appendChild(preview);
+            }
+
+            container.appendChild(newForm);
+            totalForms.value = currentFormCount + 1;
+
+            attachCropper(fileInput);
+        });
+    }
+
+    // ========= AJAX چک محدودیت دسته‌بندی =========
+
+    const categorySelect = document.getElementById('id_category');
+    const errorDiv = document.getElementById('category-error');
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function () {
+            const categoryId = this.value;
+
+            if (!categoryId) {
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+                return;
+            }
+
+            fetch(`/news/check-daily-limit/?category_id=${categoryId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.ok) {
+                    errorDiv.textContent = data.message || 'امکان ارسال خبر در این دسته‌بندی وجود ندارد.';
+                    errorDiv.style.display = 'block';
+                    categorySelect.value = '';
+                } else {
+                    errorDiv.style.display = 'none';
+                    errorDiv.textContent = '';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                errorDiv.textContent = 'خطا در بررسی محدودیت دسته‌بندی.';
+                errorDiv.style.display = 'block';
+            });
+        });
+    }
+
+});
+</script>
+{% endblock %}

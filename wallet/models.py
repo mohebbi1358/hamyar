@@ -17,10 +17,14 @@ class Wallet(models.Model):
         name_or_id = getattr(self.user, 'get_full_name', lambda: '')() or getattr(self.user, 'phone', '') or self.user.username
         return f"کیف پول {name_or_id} - موجودی: {self.balance} تومان"
 
+
+
+
 class WalletTransaction(models.Model):
     TRANSACTION_TYPES = [
         ('CHARGE', 'شارژ کیف پول'),
         ('DONATION', 'پرداخت صدقه از کیف پول'),
+        ('COUPON_PURCHASE', 'خرید کوپن ارسال پیام از کیف پول'),
     ]
 
     STATUS_CHOICES = [
@@ -36,7 +40,7 @@ class WalletTransaction(models.Model):
     )
     amount = models.PositiveIntegerField(verbose_name="مبلغ (تومان)")
     transaction_type = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=TRANSACTION_TYPES,
         default='CHARGE'
     )
@@ -53,8 +57,19 @@ class WalletTransaction(models.Model):
         default='SUCCESS'
     )
     created_at = models.DateTimeField(auto_now_add=True)
-
     ref_id = models.CharField(max_length=100, null=True, blank=True, verbose_name="شناسه مرجع تراکنش")
+    
+    # ✅ فیلد جدید
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="توضیحات تراکنش"
+    )
 
     def __str__(self):
         return f"{self.get_transaction_type_display()} - {self.amount} تومان - {self.status}"
+
+
+
+

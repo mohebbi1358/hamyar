@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+
+{% block title %}ارسال پیام{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+  <style>
+    form#notification-form {
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #fafafa;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input[type="text"], select, textarea, input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+    textarea {
+      resize: vertical;
+    }
+    ul.suggestions {
+      border: 1px solid #ccc;
+      background: #fff;
+      max-height: 150px;
+      overflow-y: auto;
+      position: absolute;
+      width: 100%;
+      z-index: 1000;
+      list-style: none;
+      padding: 0;
+      margin-top: 0;
+      border-radius: 0 0 4px 4px;
+    }
+    ul.suggestions li {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    ul.suggestions li:hover {
+      background-color: #eee;
+    }
+    .autocomplete-wrapper {
+      position: relative;
+    }
+    .coupon-info {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #2a7a2a;
+    }
+    .coupon-warning {
+      color: #c00;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .autocomplete-row {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .autocomplete-wrapper {
+      flex: 1 1 45%;
+      min-width: 200px;
+    }
+    button.submit-btn {
+      margin-top: 25px;
+      padding: 12px 25px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+    button.submit-btn:hover {
+      background-color: #218838;
+    }
+    .field-errors {
+      color: #c00;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    #dual-field-error {
+      color: #c00;
+      font-weight: bold;
+      margin-top: 8px;
+      display: none;
+    }
+    @media (max-width: 480px) {
+      .autocomplete-row {
+        flex-direction: column;
+      }
+      .autocomplete-wrapper {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <h1 class="text-center">ارسال پیام</h1>
+
+  <form method="POST" id="notification-form" autocomplete="off" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="field-errors">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- گروه -->
+    <label for="id_group">{{ form.group.label }}</label>
+    {{ form.group }}
+    {% if form.group.errors %}
+      <div class="field-errors">{{ form.group.errors|join:", " }}</div>
+    {% endif %}
+
+    <div id="coupon-info" class="coupon-info" style="display:none;"></div>
+    <div id="coupon-warning" class="coupon-warning" style="display:none;">شما کوپن کافی برای ارسال پیام در این گروه ندارید.</div>
+
+    <!-- عنوان -->
+    <label for="id_title">{{ form.title.label }}</label>
+    {{ form.title }}
+    {% if form.title.errors %}
+      <div class="field-errors">{{ form.title.errors|join:", " }}</div>
+    {% endif %}
+
+    <!-- توضیحات -->
+    <label for="id_description">{{ form.description.label }}</label>
+    {{ form.description }}
+    {% if form.description.errors %}
+      <div class="field-errors">{{ form.description.errors|join:", " }}</div>
+    {% endif %}
+
+    <!-- جاودانه و خبر کنار هم -->
+    <div class="autocomplete-row">
+      <div class="autocomplete-wrapper">
+        <label for="eternal_search">جاودانه مرتبط</label>
+        <input type="text" id="eternal_search" placeholder="نام جاودانه را جستجو کنید...">
+        <input type="hidden" name="eternal" id="eternal_id">
+      </div>
+      <div class="autocomplete-wrapper">
+        <label for="news_search">خبر مرتبط</label>
+        <input type="text" id="news_search" placeholder="عنوان خبر را جستجو کنید...">
+        <input type="hidden" name="news" id="news_id">
+      </div>
+    </div>
+
+    <div id="dual-field-error">لطفا فقط یکی از دو فیلد "جاودانه مرتبط" یا "خبر مرتبط" را پر کنید.</div>
+
+    <!-- مدت اعتبار -->
+    <label for="id_expire_days">{{ form.expire_days.label }}</label>
+    {{ form.expire_days }}
+    {% if form.expire_days.errors %}
+      <div class="field-errors">{{ form.expire_days.errors|join:", " }}</div>
+    {% endif %}
+
+    <!-- دکمه ارسال -->
+    <button type="submit" class="submit-btn">ارسال</button>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <script>
+    $(function() {
+      function setupAutocomplete(inputSelector, hiddenInputSelector, url, mapFunc) {
+        var $input = $(inputSelector);
+        var $hidden = $(hiddenInputSelector);
+
+        $input.on('input', function() {
+          var query = $(this).val();
+          $hidden.val('');
+          if (query.length < 2) {
+            $(this).siblings('ul.suggestions').remove();
+            return;
+          }
+          $.getJSON(url, {q: query}, function(data) {
+            $input.siblings('ul.suggestions').remove();
+            var list = $('<ul class="suggestions"></ul>');
+            data.forEach(function(item) {
+              var li = $('<li></li>').text(mapFunc(item));
+              li.on('click', function() {
+                $input.val(mapFunc(item));
+                $hidden.val(item.id);
+                list.remove();
+              });
+              list.append(li);
+            });
+            $input.after(list);
+          });
+        });
+
+        $(document).on('click', function(e) {
+          if (!$(e.target).closest(inputSelector).length) {
+            $(inputSelector).siblings('ul.suggestions').remove();
+          }
+        });
+      }
+
+      setupAutocomplete(
+        '#eternal_search',
+        '#eternal_id',
+        '{% url "eternals:eternals_search" %}',
+        function(item) {
+          return item.name;
+        }
+      );
+
+      setupAutocomplete(
+        '#news_search',
+        '#news_id',
+        '{% url "news:news_search" %}',
+        function(item) {
+          return item.title;
+        }
+      );
+
+      function updateCouponInfo(group_id) {
+        if (!group_id) {
+          $('#coupon-info').hide();
+          $('#coupon-warning').hide();
+          $('#id_expire_days').val('');
+          return;
+        }
+        $.getJSON('/notifications/api/notification-group/' + group_id + '/', function(data) {
+          if (data && data.default_expire_days !== undefined) {
+            $('#id_expire_days').val(data.default_expire_days);
+          } else {
+            $('#id_expire_days').val('');
+          }
+
+          if (data.send_cost && data.send_cost > 0) {
+            if (data.available_coupons > 0) {
+              $('#coupon-info').text('تعداد کوپن‌های باقی‌مانده برای ارسال: ' + data.available_coupons).show();
+              $('#coupon-warning').hide();
+            } else {
+              $('#coupon-info').hide();
+              $('#coupon-warning').show();
+            }
+          } else {
+            $('#coupon-info').hide();
+            $('#coupon-warning').hide();
+          }
+        });
+      }
+
+      $('#id_group').on('change', function() {
+        var group_id = $(this).val();
+        updateCouponInfo(group_id);
+      });
+
+      if ($('#id_group').val()) {
+        updateCouponInfo($('#id_group').val());
+      }
+
+      const $eternalInput = $('#eternal_search');
+      const $newsInput = $('#news_search');
+      const $errorMsg = $('#dual-field-error');
+
+      function validateDualFields() {
+        const eternalVal = $eternalInput.val().trim();
+        const newsVal = $newsInput.val().trim();
+
+        if (eternalVal && newsVal) {
+          $errorMsg.show();
+        } else {
+          $errorMsg.hide();
+        }
+      }
+
+      $eternalInput.on('input', function() {
+        if ($(this).val().trim()) {
+          $newsInput.val('');
+          $('#news_id').val('');
+        }
+        validateDualFields();
+      });
+
+      $newsInput.on('input', function() {
+        if ($(this).val().trim()) {
+          $eternalInput.val('');
+          $('#eternal_id').val('');
+        }
+        validateDualFields();
+      });
+
+      // اعتبارسنجی قبل ارسال فرم (کلاینت)
+      $('#notification-form').on('submit', function(e) {
+        const eternalVal = $eternalInput.val().trim();
+        const newsVal = $newsInput.val().trim();
+
+        if (eternalVal && newsVal) {
+          e.preventDefault();
+          alert("لطفا فقط یکی از دو فیلد 'جاودانه مرتبط' یا 'خبر مرتبط' را پر کنید.");
+          $errorMsg.show();
+          return false;
+        }
+      });
+    });
+  </script>
+{% endblock %}

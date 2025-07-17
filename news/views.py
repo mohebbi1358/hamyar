@@ -262,3 +262,131 @@ def check_daily_limit(request):
 
 
 
+
+
+from django.http import JsonResponse
+from django.views import View
+from .models import News
+
+class NewsSearchView(View):
+    def get(self, request):
+        query = request.GET.get('q', '')
+        results = []
+        if query:
+            news_qs = News.objects.filter(title__icontains=query)[:10]
+            results = [{'id': n.id, 'title': n.title} for n in news_qs]
+        return JsonResponse(results, safe=False)
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import News, Category
+from .forms import NewsForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+@login_required
+def manage_news(request):
+    news_list = News.objects.filter(author=request.user).select_related('category').order_by('-created_at')
+    categories = Category.objects.all()
+
+    if request.method == 'POST':
+        news_id = request.POST.get('news_id')
+        category_id = request.POST.get('category_id')
+        news_item = get_object_or_404(News, id=news_id, author=request.user)
+        new_category = get_object_or_404(Category, id=category_id)
+        news_item.category = new_category
+        news_item.save()
+        messages.success(request, 'دسته‌بندی با موفقیت تغییر یافت.')
+        return redirect('manage_news')
+
+    return render(request, 'news/manage_news.html', {
+        'news_list': news_list,
+        'categories': categories,
+    })
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import News
+from .forms import NewsForm, NewsImageFormSet
+from django.contrib import messages
+from django.forms import modelformset_factory
+from django.urls import reverse
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def edit_news(request, pk):
+    news = get_object_or_404(News, pk=pk)
+
+    if request.method == 'POST':
+        form = NewsForm(request.POST, request.FILES, instance=news)
+        formset = NewsImageFormSet(request.POST, request.FILES, instance=news)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "خبر با موفقیت ویرایش شد.")
+            return redirect('news:manage_news')
+        else:
+            messages.error(request, "خطا در ثبت فرم. لطفاً فیلدها را بررسی کنید.")
+            print("Form errors:", form.errors)
+            print("Formset errors:", formset.errors)
+    else:
+        form = NewsForm(instance=news)
+        formset = NewsImageFormSet(instance=news)
+
+    print("formset instances:", [f.instance.image.url if f.instance.image else None for f in formset.forms])
+
+    return render(request, 'news/edit_news.html', {
+        'form': form,
+        'formset': formset,
+        'news': news
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@login_required
+def delete_news(request, pk):
+    news = get_object_or_404(News, id=pk, author=request.user)
+    news.delete()
+    messages.success(request, 'خبر حذف شد.')
+    return redirect('news:manage_news')
+
+
+

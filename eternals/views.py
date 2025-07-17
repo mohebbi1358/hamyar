@@ -219,19 +219,61 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import HttpResponseForbidden
 from django.views.generic.edit import UpdateView, DeleteView
 
+
+
+
+
+
+
+from django.urls import reverse_lazy
+from django.utils.timezone import now
+from django.http import HttpResponseForbidden
+from django.views.generic.edit import UpdateView
+
+
+
+
 class CeremonyUpdateView(UpdateView):
     model = Ceremony
     form_class = CeremonyForm
     template_name = 'eternals/ceremony_form.html'
-    success_url = reverse_lazy('eternals:list')
 
     def dispatch(self, request, *args, **kwargs):
         obj = self.get_object()
         if request.user != obj.user or (now() - obj.created_at).total_seconds() > 120:
             return HttpResponseForbidden("اجازه ویرایش ندارید.")
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # اضافه کردن eternal به context
+        ceremony = self.object
+        context['eternal'] = ceremony.eternal
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.object.refresh_from_db()
+        return response
+
     def get_success_url(self):
-        return reverse_lazy('eternals:detail', kwargs={'pk': self.object.eternal.id})
+        eternal = getattr(self.object, 'eternal', None)
+        eternal_id = eternal.id if eternal else None
+        if eternal_id:
+            return reverse_lazy('eternals:detail', kwargs={'pk': eternal_id})
+        else:
+            return reverse_lazy('eternals:list')
+
+
+
+
+
+
+
+
+
+
+
 
 
 class CeremonyDeleteView(DeleteView):
@@ -326,5 +368,26 @@ def eternal_donations_list(request, pk):
         'donations': donations,
         'donations_total': donations_total,
     })
+
+
+
+
+
+from django.http import JsonResponse
+from django.views import View
+from .models import Eternals
+
+class EternalsSearchView(View):
+    def get(self, request):
+        query = request.GET.get('q', '')
+        results = []
+        if query:
+            eternal_qs = Eternals.objects.filter(
+                first_name__icontains=query
+            )[:10]
+            results = [{'id': e.id, 'name': f"{e.first_name} {e.last_name}"} for e in eternal_qs]
+        return JsonResponse(results, safe=False)
+
+
 
 
