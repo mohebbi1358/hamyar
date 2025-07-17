@@ -429,6 +429,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, HttpResponseServerError
 
 User = get_user_model()
 
@@ -436,26 +437,22 @@ def create_superuser_form(request):
     if request.method == 'POST':
         phone = request.POST.get('phone')
         password = request.POST.get('password')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
 
-        if not phone or not password:
-            messages.error(request, 'شماره موبایل و رمز عبور الزامی هستند.')
-        elif User.objects.filter(phone=phone).exists():
-            messages.error(request, 'کاربری با این شماره موبایل قبلاً ثبت شده است.')
-        else:
-            User.objects.create_superuser(
+        try:
+            user = User.objects.create_superuser(
                 phone=phone,
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
             )
-            messages.success(request, 'سوپریوزر با موفقیت ساخته شد!')
-            return redirect('create_superuser_form')
+            return HttpResponse(f'کاربر {user.get_display_name()} با موفقیت ساخته شد')
+        except Exception as e:
+            # نمایش خطای واقعی در مرورگر
+            return HttpResponseServerError(f'خطا: {str(e)}')
 
     return render(request, 'accounts/create_superuser_form.html')
-
-
 
 
 
