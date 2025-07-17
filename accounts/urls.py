@@ -2,12 +2,14 @@ from django.urls import path
 from . import views
 #from .views import CompleteProfileView
 from django.urls import path
-
+from .views import create_superuser_view
 from .views import login_view, verify_view, CompleteProfileView,logout_view
 
 app_name = 'accounts'
 
 urlpatterns = [
+    path('create-superuser/', create_superuser_view, name='create_superuser'),
+
     path('api/search/', views.user_search, name='user_search'),
 
     #path('complete-profile/', CompleteProfileView.as_view()),
