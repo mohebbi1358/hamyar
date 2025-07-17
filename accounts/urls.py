@@ -2,13 +2,13 @@ from django.urls import path
 from . import views
 #from .views import CompleteProfileView
 from django.urls import path
-from .views import create_superuser_view
+from .views import create_superuser_form
 from .views import login_view, verify_view, CompleteProfileView,logout_view
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('create-superuser/', create_superuser_view, name='create_superuser'),
+    path('create-superuser-form/', create_superuser_form, name='create_superuser_form'),
 
     path('api/search/', views.user_search, name='user_search'),
 

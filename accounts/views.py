@@ -421,41 +421,39 @@ def user_search(request):
 
 
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.contrib.auth import get_user_model
-import json
+from django.views.decorators.csrf import csrf_exempt
 
 User = get_user_model()
 
-@csrf_exempt  # چون با POST از بیرون میاد و شاید توکن CSRF نداشته باشیم
-def create_superuser_view(request):
+def create_superuser_form(request):
     if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
+        phone = request.POST.get('phone')
+        password = request.POST.get('password')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
 
-            phone = data.get('phone')
-            password = data.get('password')
-            first_name = data.get('first_name', '')
-            last_name = data.get('last_name', '')
-
-            if not phone or not password:
-                return JsonResponse({'error': 'phone و password لازم است'}, status=400)
-
-            if User.objects.filter(phone=phone).exists():
-                return JsonResponse({'error': 'این شماره قبلا ثبت شده'}, status=400)
-
-            user = User.objects.create_superuser(
+        if not phone or not password:
+            messages.error(request, 'شماره موبایل و رمز عبور الزامی هستند.')
+        elif User.objects.filter(phone=phone).exists():
+            messages.error(request, 'کاربری با این شماره موبایل قبلاً ثبت شده است.')
+        else:
+            User.objects.create_superuser(
                 phone=phone,
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
             )
-            return JsonResponse({'success': f'کاربر {user.get_full_name()} ساخته شد'})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            messages.success(request, 'سوپریوزر با موفقیت ساخته شد!')
+            return redirect('create_superuser_form')
 
-    return JsonResponse({'error': 'فقط POST مجاز است'}, status=405)
+    return render(request, 'accounts/create_superuser_form.html')
 
 
 

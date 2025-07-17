@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>ساخت سوپریوزر</title>
+</head>
+<body>
+    <h2>ساخت سوپریوزر جدید</h2>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li style="color: {% if message.tags == 'error' %}red{% else %}green{% endif %};">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <label>شماره موبایل:</label><br>
+        <input type="text" name="phone"><br><br>
+
+        <label>رمز عبور:</label><br>
+        <input type="password" name="password"><br><br>
+
+        <label>نام:</label><br>
+        <input type="text" name="first_name"><br><br>
+
+        <label>نام خانوادگی:</label><br>
+        <input type="text" name="last_name"><br><br>
+
+        <button type="submit">ساخت سوپریوزر</button>
+    </form>
+</body>
+</html>
