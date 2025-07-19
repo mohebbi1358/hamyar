@@ -38,6 +38,19 @@ class NewsImage(models.Model):
     image = models.ImageField(upload_to='news/extra_images/')
 
 
+
+class NewsLink(models.Model):
+    news = models.ForeignKey(News, related_name='links', on_delete=models.CASCADE)
+    title = models.CharField(max_length=100, verbose_name="عنوان لینک")  # مثلاً: «لینک ایتا»
+    url = models.URLField(verbose_name="آدرس لینک")  # مثلاً: https://eitaa.com/mychannel/post/123
+
+    def __str__(self):
+        return f"{self.title} - {self.url}"
+
+
+
+
+
 class Comment(models.Model):
     news = models.ForeignKey(News, on_delete=models.CASCADE, related_name='comments')
     persona = models.ForeignKey('accounts.Persona', on_delete=models.CASCADE)

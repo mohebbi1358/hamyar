@@ -22,21 +22,44 @@
 <section class="news-list d-flex flex-column gap-4">
     {% for item in page_obj %}
         <div class="d-flex gap-3 align-items-start border-bottom pb-3">
+
+            <!-- 🔸 عکس خبر -->
             <a href="{% url 'news:news_detail' item.id %}">
-                <img src="{{ item.main_image.url }}" alt="{{ item.title }}"
-                     class="rounded" style="width: 180px; height: 120px; object-fit: cover;">
+                {% if item.main_image %}
+                    <img src="{{ item.main_image.url }}" alt="{{ item.title }}"
+                         class="rounded" style="width: 180px; height: 120px; object-fit: cover;">
+                {% else %}
+                    <div style="width:180px; height:120px; background:#eee;" class="rounded"></div>
+                {% endif %}
             </a>
+
+            <!-- 🔸 متن و لینک‌ها -->
             <div class="flex-grow-1">
                 <a href="{% url 'news:news_detail' item.id %}" class="text-dark text-decoration-none">
                     <h5>{{ item.title }}</h5>
                 </a>
-                <p class="text-muted">{{ item.summary|truncatewords:25 }}</p>
+
+                {% if item.links.all %}
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        {% for link in item.links.all %}
+                            <a href="{{ link.url }}" target="_blank"
+                               class="btn btn-outline-info btn-sm rounded-pill px-3 py-1"
+                               style="font-size: 18px; font-weight: 500;">
+                                🔗 {{ link.title }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <p class="text-muted mb-0">{{ item.summary|truncatewords:25 }}</p>
             </div>
         </div>
     {% empty %}
         <p class="text-center">هیچ خبری برای نمایش وجود ندارد.</p>
     {% endfor %}
 </section>
+
+
 
 <!-- 🔹 صفحه‌بندی -->
 <div class="pagination text-center mt-5">

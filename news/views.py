@@ -3,19 +3,26 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from .models import News, NewsImage, Category
-from .forms import NewsForm, NewsImageFormSet
+from .forms import NewsForm, NewsImageFormSet, NewsLinkFormSet
 
 
 
+
+
+
+
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import News, Category
 
 def news_list(request):
     categories = Category.objects.all()
     selected_category_id = request.GET.get('category')
 
+    news_items = News.objects.all().select_related('category').prefetch_related('links').order_by('-created_at')
+
     if selected_category_id:
-        news_items = News.objects.filter(category_id=selected_category_id).order_by('-created_at')
-    else:
-        news_items = News.objects.all().order_by('-created_at')
+        news_items = news_items.filter(category_id=selected_category_id)
 
     paginator = Paginator(news_items, 5)
     page_number = request.GET.get('page')
@@ -24,8 +31,11 @@ def news_list(request):
     return render(request, 'news/news_list.html', {
         'page_obj': page_obj,
         'categories': categories,
-        'selected_category_id': int(selected_category_id) if selected_category_id else None
+        'selected_category_id': int(selected_category_id) if selected_category_id else None,
     })
+
+
+
 
 
 from .forms import CommentForm
@@ -72,13 +82,23 @@ def news_detail(request, news_id):
 from django.utils import timezone
 from django.contrib import messages
 
+
+
+
+
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def create_news(request):
     if request.method == 'POST':
         form = NewsForm(request.POST, request.FILES, user=request.user)
         formset = NewsImageFormSet(request.POST, request.FILES)
+        link_formset = NewsLinkFormSet(request.POST)  # لینک‌ها فقط متن و آدرس هستند، فایل ندارند
 
-        if form.is_valid() and formset.is_valid():
+        if form.is_valid() and formset.is_valid() and link_formset.is_valid():
             category = form.cleaned_data['category']
             daily_limit = category.daily_limit
 
@@ -92,23 +112,30 @@ def create_news(request):
 
                 if news_count_today >= daily_limit:
                     messages.error(request, f'شما به سقف مجاز ارسال روزانه ({daily_limit} خبر) در دسته‌بندی "{category.name}" رسیده‌اید.')
-                    return redirect('news:create_news')  # یا بازگشت به همان فرم
+                    return redirect('news:create_news')
 
-            # ادامه روند ذخیره:
             news = form.save(commit=False)
             news.author = request.user
             news.save()
+
             formset.instance = news
             formset.save()
+
+            link_formset.instance = news
+            link_formset.save()
+
             return redirect('news:news_detail', news_id=news.id)
     else:
         form = NewsForm(user=request.user)
         formset = NewsImageFormSet()
+        link_formset = NewsLinkFormSet()
 
     return render(request, 'news/create_news.html', {
         'form': form,
-        'formset': formset
+        'formset': formset,
+        'link_formset': link_formset,
     })
+
 
 
 

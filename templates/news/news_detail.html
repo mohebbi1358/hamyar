@@ -10,7 +10,26 @@
 
   <div class="row mb-4">
     <div class="col-lg-8 mx-auto">
-      <h1 class="mb-3 text-center">{{ news.title }}</h1>
+      
+      {% if news.links.all %}
+        <div class="row mb-4">
+          <h1 class="mb-3 text-center">{{ news.title }}</h1>
+          <div class="col-lg-8 mx-auto text-center">
+            <!--<h4 class="mb-3">🔗 لینک‌های مرتبط</h4>-->
+            
+            <div class="d-flex justify-content-center flex-wrap gap-2">
+              
+              {% for link in news.links.all %}
+                <a href="{{ link.url }}" target="_blank"
+                    class="btn btn-outline-info btn-sm rounded-pill px-3 py-1"
+                    style="font-size: 18px; font-weight: 500;">
+                    🔗 {{ link.title }}
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
 
       {% if news.main_image %}
         <a href="{{ news.main_image.url }}" class="glightbox" data-gallery="main-gallery">

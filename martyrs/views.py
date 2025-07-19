@@ -49,18 +49,35 @@ def create_martyr_view(request):
 # لیست شهدا
 from django.db.models import Q  # بالای فایل اضافه شود
 
+
+
+
+from django.db.models import Q
+from django.shortcuts import render
+from .models import Martyr  # اطمینان از ایمپورت مدل
+
 def martyr_list(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+    martyrs = Martyr.objects.all()
+
     if query:
-        martyrs = Martyr.objects.filter(
-            Q(first_name__icontains=query) | Q(last_name__icontains=query)
-        )
-    else:
-        martyrs = Martyr.objects.all()
+        keywords = query.split()
+        q_object = Q()
+        for word in keywords:
+            q_object &= (
+                Q(first_name__icontains=word) |
+                Q(last_name__icontains=word)
+            )
+        martyrs = martyrs.filter(q_object)
+
     return render(request, 'martyrs/martyr_list.html', {
         'martyrs': martyrs,
         'query': query,
     })
+
+
+
+
 
 
 

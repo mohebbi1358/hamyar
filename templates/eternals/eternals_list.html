@@ -62,6 +62,15 @@
   <h2 style="text-align: center;">لیست جاودانه‌ها</h2>
 
 
+  <div class="search-box" style="text-align: center; margin-top: 20px;">
+    <form method="get" style="display: inline-flex; gap: 10px;">
+      <input type="text" name="q" placeholder="جستجو بر اساس نام یا نام خانوادگی"
+            value="{{ request.GET.q }}" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 250px;">
+      <button type="submit" style="padding: 8px 16px; border-radius: 8px; background-color: #3498db; color: white; border: none;">جستجو</button>
+    </form>
+  </div>
+
+
   <div class="eternals-grid">
     {% for eternal in eternals %}
       <a href="{% url 'eternals:detail' eternal.pk %}" class="eternal-card">

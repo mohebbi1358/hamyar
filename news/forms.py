@@ -7,6 +7,13 @@ from django import forms
 from django.forms.models import inlineformset_factory
 from .models import News, NewsImage
 
+
+
+
+from django import forms
+from django.forms import inlineformset_factory
+from .models import News, NewsImage, NewsLink
+
 class NewsForm(forms.ModelForm):
     class Meta:
         model = News
@@ -16,18 +23,31 @@ class NewsForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # گرفتن کاربر از ویو
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
             self.fields['category'].queryset = user.allowed_categories.all()
 
 
+# 📷 فرم ست تصاویر اضافه‌ای خبر
 NewsImageFormSet = inlineformset_factory(
     News, NewsImage,
     fields=['image'],
     extra=1,
     can_delete=True
 )
+
+# 🔗 فرم ست لینک‌های اضافه‌شده به خبر
+NewsLinkFormSet = inlineformset_factory(
+    News, NewsLink,
+    fields=['title', 'url'],
+    extra=1,
+    can_delete=True
+)
+
+
+
+
 
 
 

@@ -11,10 +11,43 @@ from .forms import EternalsForm, CeremonyForm, CondolenceMessageForm
 from accounts.models import Persona
 
 
+
+
+
+
+
+
+
+
+
+from django.db.models import Q
+
 class EternalsListView(ListView):
     model = Eternals
     template_name = 'eternals/eternals_list.html'
     context_object_name = 'eternals'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q', '')
+        if query:
+            keywords = query.strip().split()
+            q_object = Q()
+            for word in keywords:
+                q_object &= (
+                    Q(first_name__icontains=word) |
+                    Q(last_name__icontains=word)
+                )
+            queryset = queryset.filter(q_object)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '')
+        return context
+
+
+
 
 
 from django.views.generic.detail import DetailView
