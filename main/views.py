@@ -54,11 +54,14 @@ class MeliPayamakAPI:
             'text': text,
             'isflash': str(is_flash).lower()
         }
+        print(f"Sending SMS with params: {params}")
         try:
             response = requests.get(self.BASE_URL, params=params)
+            print(f"HTTP status code: {response.status_code}")
+            print(f"Response text: {response.text}")
             response.raise_for_status()
-            return response.text  # یا می‌تونی کد پاسخ را اینجا پردازش کنی
+            return response.text
         except requests.RequestException as e:
-            # لاگ کردن خطا یا مدیریت خطا در اینجا
             print(f"Error sending SMS: {e}")
             return None
+

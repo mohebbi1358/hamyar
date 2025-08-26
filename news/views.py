@@ -15,6 +15,10 @@ from django.shortcuts import render
 from django.core.paginator import Paginator
 from .models import News, Category
 
+
+
+
+
 def news_list(request):
     categories = Category.objects.all()
     selected_category_id = request.GET.get('category')
@@ -102,16 +106,25 @@ def create_news(request):
             category = form.cleaned_data['category']
             daily_limit = category.daily_limit
 
+
+            # بررسی مجاز بودن کاربر به دسته‌بندی
+            if category not in request.user.allowed_categories.all():
+                messages.error(request, "شما مجاز به ارسال خبر در این دسته‌بندی نیستید.")
+                return redirect('news:create_news')
+
+            # محدودیت کلی دسته
+
+
             if daily_limit > 0:
                 today = timezone.now().date()
                 news_count_today = News.objects.filter(
-                    author=request.user,
+                    #author=request.user,
                     category=category,
                     created_at__date=today
                 ).count()
 
                 if news_count_today >= daily_limit:
-                    messages.error(request, f'شما به سقف مجاز ارسال روزانه ({daily_limit} خبر) در دسته‌بندی "{category.name}" رسیده‌اید.')
+                    messages.error(request, f'سقف روزانه دسته‌بندی "{category.name}" پر شده است.')
                     return redirect('news:create_news')
 
             news = form.save(commit=False)
@@ -262,11 +275,11 @@ def check_daily_limit(request):
         })
 
     # اگر سقف روزانه صفر بود یعنی محدودیتی ندارد
-    if category.daily_limit == 0:
-        return JsonResponse({
-            "ok": True,
-            "message": f"دسته‌بندی {category.name} پیدا شد و محدودیتی برای ارسال خبر ندارد."
-        })
+    #if category.daily_limit == 0:
+     #   return JsonResponse({
+      #      "ok": True,
+       #     "message": f"دسته‌بندی {category.name} پیدا شد و محدودیتی برای ارسال خبر ندارد."
+        #})
 
     today = now().date()
     count_today = News.objects.filter(

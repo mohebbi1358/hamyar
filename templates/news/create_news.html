@@ -217,13 +217,13 @@
         <div id="link-formset-container">
             {{ link_formset.management_form }}
             {% for f in link_formset %}
-                <div class="link-form" style="margin-bottom: 15px;">
-                    <div class="field">
-                        <label>{{ f.title.label }}:</label>
+                <div class="link-form" style="margin-bottom: 15px; display: flex; gap: 20px;">
+                    <div class="field" style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px;">{{ f.title.label }}:</label>
                         {{ f.title }}
-                    <!--</div>
-                    <div class="field">-->
-                        <label>{{ f.url.label }}:</label>
+                    </div>
+                    <div class="field" style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px;">{{ f.url.label }}:</label>
                         {{ f.url }}
                     </div>
                 </div>

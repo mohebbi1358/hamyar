@@ -1,19 +1,48 @@
 import re
+from datetime import timedelta
 
-from main.views import MeliPayamakAPI
 from django.conf import settings
-from django.contrib.auth import login, get_user_model
-from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import login, logout, get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseServerError, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.views import View
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from datetime import timedelta
-from .models import User
+from rest_framework.views import APIView
+
+from main.views import MeliPayamakAPI
+from .forms import PersonaForm, UserCategoryAccessForm
+from .models import Persona, User
+
 
 # حافظه موقتی برای ذخیره کدهای پیامک
 SMS_CODE_STORAGE = {}
+
+# خطاهای ملی پیامک
+MELI_PAYAMAK_ERRORS = {
+    0: 'نام کاربری یا رمز عبور اشتباه است.',
+    2: 'اعتبار کافی نمی‌باشد.',
+    3: 'محدودیت در ارسال روزانه.',
+    4: 'محدودیت در حجم ارسال.',
+    5: 'شماره فرستنده معتبر نمی‌باشد.',
+    6: 'سامانه در حال بروزرسانی می‌باشد.',
+    7: 'متن حاوی کلمه فیلتر شده می‌باشد.',
+    9: 'ارسال از خطوط عمومی از طریق وب‌سرویس امکان‌پذیر نمی‌باشد.',
+    10: 'کاربر مورد نظر فعال نمی‌باشد.',
+    11: 'پیام ارسال نشده است.',
+    12: 'مدارک کاربر کامل نمی‌باشد.',
+    14: 'متن حاوی لینک می‌باشد.',
+    15: 'ارسال به بیش از 1 شماره بدون درج "لغو11" ممکن نیست.',
+    16: 'شماره گیرنده یافت نشد.',
+    17: 'متن پیامک خالی است.',
+    35: 'شماره در لیست سیاه مخابرات قرار دارد.',
+}
+
 
 # --- API Views ---
 
@@ -22,7 +51,7 @@ class SendSMSCodeView(APIView):
         phone = request.data.get("phone")
         if not phone:
             return Response({"error": "Phone is required"}, status=400)
-        
+
         current_time = timezone.now()
 
         if phone in SMS_CODE_STORAGE:
@@ -44,8 +73,12 @@ class SendSMSCodeView(APIView):
         )
         sms_text = f"کد ورود شما: {code}"
         result = api.send_sms(phone, sms_text)
+        
+        print("=== MELI PAYAMAK RAW RESPONSE ===")
+        print(result)
 
         return Response({"detail": "Code sent"}, status=200)
+
 
 class VerifySMSCodeView(APIView):
     def post(self, request):
@@ -72,104 +105,82 @@ class VerifySMSCodeView(APIView):
 
 # --- Template Views ---
 
+# ذخیره کدها در حافظه
 
 
 
-
-
-from django.conf import settings
-from django.contrib.auth import login, get_user_model
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from django.utils.crypto import get_random_string
-from datetime import timedelta
-from main.views import MeliPayamakAPI
-from .models import User
-
-# حافظه موقتی برای ذخیره کدهای پیامک
-SMS_CODE_STORAGE = {}
-
-# خطاهای ملی پیامک
-MELI_PAYAMAK_ERRORS = {
-    0: 'نام کاربری یا رمز عبور اشتباه است.',
-    2: 'اعتبار کافی نمی‌باشد.',
-    3: 'محدودیت در ارسال روزانه.',
-    4: 'محدودیت در حجم ارسال.',
-    5: 'شماره فرستنده معتبر نمی‌باشد.',
-    6: 'سامانه در حال بروزرسانی می‌باشد.',
-    7: 'متن حاوی کلمه فیلتر شده می‌باشد.',
-    9: 'ارسال از خطوط عمومی از طریق وب‌سرویس امکان‌پذیر نمی‌باشد.',
-    10: 'کاربر مورد نظر فعال نمی‌باشد.',
-    11: 'پیام ارسال نشده است.',
-    12: 'مدارک کاربر کامل نمی‌باشد.',
-    14: 'متن حاوی لینک می‌باشد.',
-    15: 'ارسال به بیش از 1 شماره بدون درج "لغو11" ممکن نیست.',
-    16: 'شماره گیرنده یافت نشد.',
-    17: 'متن پیامک خالی است.',
-    35: 'شماره در لیست سیاه مخابرات قرار دارد.',
-}
+def is_valid_phone(phone):
+    return re.fullmatch(r'^09\d{9}$', phone)
 
 
 def login_view(request):
-    if request.method == 'POST':
-        phone = request.POST.get('phone')
-        password = request.POST.get('password')
-        action = request.POST.get('action')
+    if request.method != 'POST':
+        return render(request, 'accounts/login.html')
 
-        if not phone:
-            return render(request, 'accounts/login.html', {'error': 'شماره موبایل الزامی است'})
+    phone = request.POST.get('phone')
+    password = request.POST.get('password')
+    action = request.POST.get('action')
 
-        User = get_user_model()
+    if not phone:
+        return render(request, 'accounts/login.html', {'error': 'شماره موبایل الزامی است.'})
 
-        if action == 'login_password':
-            try:
-                user = User.objects.get(phone=phone)
-            except User.DoesNotExist:
-                user = None
+    if not is_valid_phone(phone):
+        return render(request, 'accounts/login.html', {'error': 'فرمت شماره موبایل نامعتبر است.'})
 
-            if user and user.check_password(password):
-                login(request, user)
-                return redirect('home')
-            else:
-                return render(request, 'accounts/login.html', {'error': 'شماره یا رمز اشتباه است'})
+    User = get_user_model()
 
-        elif action == 'send_code':
-            now = timezone.now()
-            if phone in SMS_CODE_STORAGE:
-                last_sent = SMS_CODE_STORAGE[phone]['time']
-                if now - last_sent < timedelta(minutes=2):
-                    return render(request, 'accounts/login.html', {
-                        'error': 'هر دو دقیقه فقط یک‌بار می‌توان درخواست داد'
-                    })
+    # ورود با رمز
+    if action == 'login_password':
+        try:
+            user = User.objects.get(phone=phone)
+        except User.DoesNotExist:
+            user = None
 
-            code = get_random_string(length=4, allowed_chars='1234567890')
-            SMS_CODE_STORAGE[phone] = {'code': code, 'time': now}
+        if user and user.check_password(password):
+            login(request, user)  # ✅ مورد 4: ورود بعد از تأیید رمز
+            return redirect('home')
+        else:
+            return render(request, 'accounts/login.html', {'error': 'شماره یا رمز اشتباه است.'})
 
-            api = MeliPayamakAPI(
-                username=settings.MELI_PAYAMAK_USERNAME,
-                password=settings.MELI_PAYAMAK_PASSWORD,
-                sender_number=settings.MELI_PAYAMAK_SENDER
-            )
-            sms_text = f"کد ورود شما: {code}"
-            result = api.send_sms(phone, sms_text)
+    # ارسال کد
+    elif action == 'send_code':
+        now = timezone.now()
 
-            print("RESULT FROM MELI PAYAMAK:", result)
+        if phone in SMS_CODE_STORAGE:
+            last_sent = SMS_CODE_STORAGE[phone]['time']
+            if now - last_sent < timedelta(minutes=2):
+                return render(request, 'accounts/login.html', {
+                    'error': 'هر دو دقیقه فقط یک‌بار می‌توان درخواست داد.'
+                })
 
-            result_code = 0
-            if result:
-                match = re.search(r'>(\d+)<', result)
-                if match:
-                    result_code = int(match.group(1))
+        code = get_random_string(length=4, allowed_chars='1234567890')
+        SMS_CODE_STORAGE[phone] = {'code': code, 'time': now}
 
-            if result_code <= 0:
-                error_msg = MELI_PAYAMAK_ERRORS.get(result_code, 'خطا در ارسال پیامک. لطفاً بعداً تلاش کنید.')
-                return render(request, 'accounts/login.html', {'error': error_msg})
+        api = MeliPayamakAPI(
+            username=settings.MELI_PAYAMAK_USERNAME,
+            password=settings.MELI_PAYAMAK_PASSWORD,
+            sender_number=settings.MELI_PAYAMAK_SENDER
+        )
+        sms_text = f"کد ورود شما: {code}"
+        result = api.send_sms(phone, sms_text)
 
-            from django.urls import reverse
-            return redirect(f"{reverse('accounts:verify')}?phone={phone}")
+        # ✅ مورد 3: بررسی نتیجه ارسال
+        result_code = 0
+        if result:
+            match = re.search(r'>(-?\d+)<', result)
+            if match:
+                result_code = int(match.group(1))
 
-    # ✅ برای درخواست GET:
-    return render(request, 'accounts/login.html')
+        if result_code < 0:
+            error_msg = MELI_PAYAMAK_ERRORS.get(result_code, 'خطا در ارسال پیامک. لطفاً بعداً تلاش کنید.')
+            return render(request, 'accounts/login.html', {'error': error_msg})
+
+        return redirect(f"{reverse('accounts:verify')}?phone={phone}")
+
+    # درخواست نامعتبر
+    return render(request, 'accounts/login.html', {'error': 'درخواست نامعتبر است.'})
+
+
 
 
 
@@ -196,9 +207,6 @@ def verify_view(request):
     phone = request.GET.get('phone')
     return render(request, 'accounts/verify.html', {'phone': phone})
 
-from .models import User  # مطمئن شو که ایمپورت شده
-
-from .models import Persona  # اضافه کن بالای فایل اگر نیست
 
 class CompleteProfileView(View):
     def get(self, request):
@@ -215,10 +223,8 @@ class CompleteProfileView(View):
             'user': user,
             'gender_choices': User.GENDER_CHOICES
         })
-    
 
     def post(self, request):
-        # ← دریافت اطلاعات فرم
         phone = request.POST.get('phone')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
@@ -236,7 +242,6 @@ class CompleteProfileView(View):
                 'gender_choices': User.GENDER_CHOICES
             })
 
-        # ← به‌روزرسانی اطلاعات کاربر
         user.first_name = first_name
         user.last_name = last_name
         user.gender = gender
@@ -244,7 +249,6 @@ class CompleteProfileView(View):
         user.is_profile_completed = True
         user.save()
 
-        # ✅ اضافه کردن شخصیت حقیقی پیش‌فرض (در صورت نبود)
         full_name = f"{first_name} {last_name}".strip()
         real_persona = user.personas.filter(persona_type=Persona.PersonaType.REAL).first()
         if real_persona:
@@ -262,35 +266,15 @@ class CompleteProfileView(View):
         return redirect('home')
 
 
-
-from django.contrib.auth.decorators import login_required
-
-
 @login_required
 def dashboard_view(request):
     return render(request, 'accounts/dashboard.html')
 
 
-
-
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-from django.shortcuts import render, get_object_or_404, redirect
-
 def logout_view(request):
     logout(request)
     return redirect('home')
 
-
-
-
-
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
-from .forms import UserCategoryAccessForm
-from .models import User
 
 @user_passes_test(lambda u: u.is_staff)
 def assign_categories_to_user(request, user_id):
@@ -299,24 +283,12 @@ def assign_categories_to_user(request, user_id):
         form = UserCategoryAccessForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
-            # ریدایرکت به صفحه manage_personas برای همان user
             return redirect('accounts:user_list')
     else:
         form = UserCategoryAccessForm(instance=user)
 
     return render(request, 'accounts/assign_categories.html', {'form': form, 'target_user': user})
 
-
-
-
-
-
-
-from django.contrib.admin.views.decorators import staff_member_required
-
-from django.db.models import Q  # اضافه شود در بالای فایل
-
-@staff_member_required
 
 @staff_member_required
 def user_list(request):
@@ -337,8 +309,6 @@ def user_list(request):
         'query': query,
     })
 
-
-from .forms import PersonaForm
 
 @staff_member_required
 def manage_user_personas(request, user_id):
@@ -386,18 +356,6 @@ def delete_persona(request, persona_id):
     return redirect('accounts:manage_personas', user_id=user_id)
 
 
-
-
-
-
-
-
-from django.http import JsonResponse
-from django.contrib.auth import get_user_model
-from django.db.models import Q
-
-User = get_user_model()
-
 def user_search(request):
     q = request.GET.get('q', '').strip()
     results = []
@@ -417,22 +375,6 @@ def user_search(request):
     return JsonResponse(results, safe=False)
 
 
-
-
-
-
-
-
-
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import get_user_model
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, HttpResponseServerError
-
-User = get_user_model()
-
 def create_superuser_form(request):
     if request.method == 'POST':
         phone = request.POST.get('phone')
@@ -449,10 +391,12 @@ def create_superuser_form(request):
             )
             return HttpResponse(f'کاربر {user.get_display_name()} با موفقیت ساخته شد')
         except Exception as e:
-            # نمایش خطای واقعی در مرورگر
             return HttpResponseServerError(f'خطا: {str(e)}')
 
     return render(request, 'accounts/create_superuser_form.html')
+
+
+
 
 
 

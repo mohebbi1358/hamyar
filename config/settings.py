@@ -44,10 +44,12 @@ INSTALLED_APPS = [
     # سایر اپ‌ها
     'rest_framework',
     'django_extensions',
+    'corsheaders',
 ]
 
 # میدلورها
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # برای استاتیک‌ها در پروداکشن
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -59,6 +61,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 # قالب‌ها
 TEMPLATES = [
@@ -130,8 +134,11 @@ REST_FRAMEWORK = {
     ),
 }
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),      # توکن کوتاه‌مدت
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),        # ✅ ماندگاری ۳ ماهه
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # سایر تنظیمات خاص

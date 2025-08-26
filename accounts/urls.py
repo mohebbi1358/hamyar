@@ -4,10 +4,13 @@ from . import views
 from django.urls import path
 from .views import create_superuser_form
 from .views import login_view, verify_view, CompleteProfileView,logout_view
+from .viewsapi import LoginAPIView, VerifyCodeAPIView
 
 app_name = 'accounts'
 
 urlpatterns = [
+    
+
     path('create-superuser-form/', create_superuser_form, name='create_superuser_form'),
 
     path('api/search/', views.user_search, name='user_search'),
